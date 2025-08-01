@@ -1,0 +1,425 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Newgate{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #4936A2;
+            --primary-accent: #382d9c;
+            --secondary-dark: #606a7d;
+            --text-light: #f8f9fa;
+            --text-muted: #9ca3af;
+            --bg-light: #fcfdff;
+            --danger: #ef4444;
+            --text-color: #1f2937;
+        }
+        
+        body {
+            padding-top: 120px; /* Space for fixed navbar */
+        }
+        .flex {
+            flex-direction: column;
+        }
+        .logo-icon {
+            margin-top: 15px;
+            margin-right: 10px;
+            height: 40px;
+            width: 40px;
+            margin-bottom: 20px;
+        }
+        /* Modern Navbar Styles */
+        .navbar-main {
+            background-color: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.75rem;
+            letter-spacing: -0.5px;
+            color: var(--text-light) !important;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-brand:hover {
+            color: var(--primary-accent) !important;
+        }
+        
+        .nav-link {
+            color: var(--text-light) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover, .nav-link:focus {
+            color: var(--primary-accent) !important;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--primary-accent);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .nav-link:hover::after {
+            width: 70%;
+        }
+        
+        .nav-icon {
+            color: var(--text-light);
+            font-size: 1.25rem;
+            padding: 0.5rem;
+            position: relative;
+            transition: all 0.2s ease;
+            border-radius: 50%;
+        }
+        
+        .nav-icon:hover {
+            color: var(--primary-accent);
+            background-color: rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .badge-notification {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Search Bar Styles */
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .search-input {
+            background-color: var(--bg-light);
+            border: none;
+            color: var(--text-color);
+            padding: 0.6rem 1.25rem;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+            background-color: var(--bg-light);
+            color: var(--text-color);
+        }
+        
+        .search-button {
+            background-color: var(--primary-accent);
+            border: none;
+            border-radius: 30px;
+            padding: 0.6rem 1.25rem;
+            margin-left: -45px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-button:hover {
+            background-color: #7015ef;
+        }
+        
+        /* Mobile Menu */
+        .mobile-search-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--primary-dark);
+            padding: 1rem;
+            z-index: 1040;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mobile-search-container.show {
+            transform: translateY(0);
+        }
+        
+        /* Time Display */
+        .time-circle {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            background: var(--primary-dark);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1020;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 992px) {
+            body {
+                padding-top: 90px;
+            }
+            
+            .navbar-collapse {
+                background-color: var(--primary-dark);
+                padding: 1rem;
+                margin-top: 0.5rem;
+                border-radius: 0.5rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            
+            .nav-link {
+                padding: 0.5rem 0 !important;
+            }
+            
+            .nav-link::after {
+                display: none;
+            }
+        }
+        
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .toast.error {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .toast.success {
+            background: #00C851;
+            color: white;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Modern Navbar -->
+    <nav class="navbar navbar-main navbar-expand-lg navbar-dark">
+        <div class="container">
+            <!-- Brand & Mobile Toggle -->
+             <img src="{% static 'images/farm.png' %}" alt="village icon" class="logo-icon">
+             <div class="flex" >
+                 <a class="navbar-brand" href="{% url 'home' %}">Brand Village</a>
+                 <h6 class="text-white">All brand together</h6>
+                </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Main Nav Content -->
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <!-- Desktop Search -->
+                <div class="search-container d-none d-lg-flex mx-3">
+                    <form action="{% url 'search' %}" method="GET" class="w-100">
+                        <div class="input-group">
+                            <input type="search" name="q" class="form-control search-input" placeholder="What can we help you find today?" required>
+                            <button class="btn search-button" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Nav Items -->
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'shop' %}">Shop</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">About</a></li>
+                    
+                </ul>
+                
+                <!-- Action Icons -->
+                <div class="d-flex align-items-center">
+                    <!-- Mobile Search Toggle -->
+                    <a href="#" class="nav-icon d-lg-none me-2" id="toggleMobileSearch">
+                        <i class="bi bi-search"></i>
+                    </a>
+                    
+                    <!-- Wishlist -->
+                    <a href="{% url 'wishlist' %}" class="nav-icon position-relative me-2">
+                        {% if wishlist_count and wishlist_count > 0 %}
+                            <span class="badge-notification">{{ wishlist_count }}</span>
+                        {% endif %}
+                        <i class="bi bi-heart"></i>
+                    </a>
+                    
+                    <!-- Cart -->
+                    <a href="{% url 'cart' %}" class="nav-icon position-relative me-2">
+                        <span class="badge-notification">{{ cart_count }}</span>
+                        <i class="bi bi-cart"></i>
+                    </a>
+                    
+                    <!-- Auth -->
+                    {% if request.user.is_authenticated %}
+                        <a href="{% url 'profile' %}" class="nav-icon">
+                            <i class="bi bi-person-circle"></i>
+                        </a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="nav-icon">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Mobile Search -->
+    <div class="mobile-search-container" id="mobileSearch">
+        <div class="container">
+            <form action="{% url 'search' %}" method="GET" class="d-flex align-items-center">
+                <button type="button" class="btn btn-link text-white me-2 p-0" id="closeMobileSearch">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+                <input type="search" name="q" class="form-control search-input flex-grow-1" placeholder="Search products..." required>
+                <button class="btn search-button ms-2" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        <!-- Guest User Notification -->
+        {% if not request.user.is_authenticated %}
+        <div class="alert alert-info alert-dismissible fade show">
+            <span>Checking out as guest? <a href="{% url 'login' %}" class="fw-bold text-decoration-none">Login</a> for a better experience</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Time Display -->
+    <div class="time-circle" id="pakistan-time"></div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h5 class="mb-3">Contact Us</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +92 300 1234567</li>
+                        <li class="mb-2"><i class="fas fa-envelope me-2"></i> support@newgate.com</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i> Main Street, Karachi</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-3">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-white-50 hover-text-light">About Us</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-white-50 hover-text-light">Privacy Policy</a></li>
+                        <li><a href="#" class="text-decoration-none text-white-50 hover-text-light">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-3">Follow Us</h5>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-3 fs-5"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-white me-3 fs-5"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white me-3 fs-5"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white fs-5"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 Newgate. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update Pakistan Time
+            function updatePakistanTime() {
+                const options = { 
+                    timeZone: 'Asia/Karachi',
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit',
+                    hour12: true 
+                };
+                const timeString = new Date().toLocaleTimeString('en-PK', options);
+                document.getElementById('pakistan-time').textContent = `PKT ${timeString}`;
+            }
+            updatePakistanTime();
+            setInterval(updatePakistanTime, 1000);
+
+            // Mobile Search Toggle
+            const toggleMobileSearch = document.getElementById('toggleMobileSearch');
+            const mobileSearch = document.getElementById('mobileSearch');
+            const closeMobileSearch = document.getElementById('closeMobileSearch');
+            
+            if (toggleMobileSearch && mobileSearch && closeMobileSearch) {
+                toggleMobileSearch.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    mobileSearch.classList.add('show');
+                });
+                
+                closeMobileSearch.addEventListener('click', () => {
+                    mobileSearch.classList.remove('show');
+                });
+            }
+
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        window.scrollTo({
+                            top: target.offsetTop - 100,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

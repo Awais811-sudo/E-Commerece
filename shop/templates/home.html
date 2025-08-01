@@ -1,0 +1,432 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Carousel -->
+<section class="hero-section mb-5">
+  <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner rounded-3 overflow-hidden">
+      <div class="carousel-item active">
+        <img src="{% static 'images/6.jpeg' %}" class="d-block w-100" alt="Special Offers">
+        <div class="carousel-caption d-none d-md-block">
+          <h2 class="display-5 fw-bold">Summer Specials</h2>
+          <p class="fs-5">Up to 50% off on fresh fruits</p>
+          <a href="#" class="btn btn-primary btn-lg mt-2">Shop Now</a>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="{% static 'images/7.jpeg' %}" class="d-block w-100" alt="New Arrivals">
+        <div class="carousel-caption d-none d-md-block">
+          <h2 class="display-5 fw-bold">New Arrivals</h2>
+          <p class="fs-5">Discover our latest products</p>
+          <a href="#" class="btn btn-primary btn-lg mt-2">Explore</a>
+        </div>
+      </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+</section>
+
+<!-- Popular Products Section -->
+<section class="mb-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="section-title mb-0">Popular Products</h2>
+      <a href="#" class="btn btn-outline-primary">View All</a>
+    </div>
+    
+    <div class="position-relative">
+      <div class="product-slider">
+        {% for product in popular_products %}
+        <div class="product-card">
+          <div class="product-badges">
+            {% if product.discount_price %}
+            <span class="badge bg-danger">Save {{ product.discount_percentage }}%</span>
+            {% endif %}
+            <span class="badge bg-success">{{ product.sold }}+ sold</span>
+          </div>
+          <div class="product-image">
+            <a href="{% url 'product_detail' product.slug %}">
+              <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}">
+            </a>
+          </div>
+          <div class="product-body">
+            <h5 class="product-title">{{ product.name }}</h5>
+            <div class="product-rating mb-2">
+              {% include 'partials/star_rating.html' with rating=product.average_rating %}
+              <small class="text-muted">({{ product.review_count }})</small>
+            </div>
+            <div class="product-price">
+              {% if product.discount_price %}
+              <span class="current-price">Rs {{ product.discount_price }}</span>
+              <span class="original-price">Rs {{ product.price }}</span>
+              {% else %}
+              <span class="current-price">Rs {{ product.price }}</span>
+              {% endif %}
+            </div>
+            <button class="btn btn-sm btn-primary w-100 mt-2">Add to Cart</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="slider-nav prev" onclick="scrollSlider(this.parentElement, -1)">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      <button class="slider-nav next" onclick="scrollSlider(this.parentElement, 1)">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Categories Section -->
+<section class="mb-5">
+  <div class="container">
+    <h2 class="section-title mb-4">Shop by Category</h2>
+    <div class="row g-3 g-md-4">
+      {% for category in categories %}
+      <div class="col-6 col-md-3 col-lg-2">
+        <a href="#" class="category-card">
+          <div class="category-img-wrapper">
+            <img src="{{ category.image.url }}" class="img-fluid" alt="{{ category.name }}">
+          </div>
+          <h6 class="category-name mt-2">{{ category.name }}</h6>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- New Arrivals Section -->
+<section class="mb-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="section-title mb-0">New Arrivals</h2>
+      <a href="#" class="btn btn-outline-primary">View All</a>
+    </div>
+    
+    <div class="position-relative">
+      <div class="product-slider">
+        {% for product in new_arrivals %}
+        <div class="product-card">
+          <div class="product-badges">
+            <span class="badge bg-info">New Arrival</span>
+            <span class="badge bg-success">{{ product.sold }}+ sold</span>
+          </div>
+          <div class="product-image">
+            <a href="{% url 'product_detail' product.slug %}">
+              {% if product.images.first %}
+  <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+{% else %}
+  <img src="{% static 'placeholder.png' %}" alt="No image">
+{% endif %}
+            </a>
+          </div>
+          <div class="product-body">
+            <h5 class="product-title">{{ product.name }}</h5>
+            <div class="product-rating mb-2">
+              {% include 'partials/star_rating.html' with rating=product.average_rating %}
+              <small class="text-muted">({{ product.review_count }})</small>
+            </div>
+            <div class="product-price">
+              {% if product.discount_price %}
+              <span class="current-price">Rs {{ product.discount_price }}</span>
+              <span class="original-price">Rs {{ product.price }}</span>
+              {% else %}
+              <span class="current-price">Rs {{ product.price }}</span>
+              {% endif %}
+            </div>
+            <button class="btn btn-sm btn-primary w-100 mt-2">Add to Cart</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="slider-nav prev" onclick="scrollSlider(this.parentElement, -1)">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      <button class="slider-nav next" onclick="scrollSlider(this.parentElement, 1)">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Hero Section */
+  .hero-section {
+    margin-top: -1rem;
+  }
+  
+  #heroCarousel {
+    height: 400px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  
+  #heroCarousel .carousel-item img {
+    height: 400px;
+    object-fit: cover;
+  }
+  
+  .carousel-caption {
+    bottom: 3rem;
+    left: 5%;
+    right: auto;
+    text-align: left;
+    max-width: 40%;
+    background: rgba(0,0,0,0.5);
+    padding: 2rem;
+    border-radius: 0.5rem;
+  }
+  
+  /* Section Titles */
+  .section-title {
+    position: relative;
+    display: inline-block;
+    font-weight: 600;
+    color: var(--primary-accent);
+  }
+  
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 250px;
+    height: 3px;
+    background: var(--secondary-dark);
+  }
+  
+  /* Product Cards */
+  .product-slider {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    padding-bottom: 1rem;
+  }
+  
+  .product-slider::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .product-card {
+    flex: 0 0 220px;
+    background: white;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  
+  .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  
+  .product-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 1;
+  }
+  
+  .product-image {
+    height: 180px;
+    overflow: hidden;
+  }
+  
+  .product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+  }
+  
+  .product-card:hover .product-image img {
+    transform: scale(1.05);
+  }
+  
+  .product-body {
+    padding: 1rem;
+  }
+  
+  .product-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .product-price {
+    font-weight: 600;
+  }
+  
+  .current-price {
+    color: var(--primary-accent);
+    font-size: 1.1rem;
+  }
+  
+  .original-price {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+  }
+  
+  /* Slider Navigation */
+  .slider-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .slider-nav.prev {
+    left: -20px;
+  }
+  
+  .slider-nav.next {
+    right: -20px;
+  }
+  
+  .position-relative:hover .slider-nav {
+    opacity: 1;
+  }
+  
+  /* Category Cards */
+  .category-card {
+    text-decoration: none;
+    color: var(--primary-dark);
+    text-align: center;
+    transition: transform 0.3s;
+  }
+  
+  .category-card:hover {
+    transform: translateY(-3px);
+    color: var(--primary-accent);
+  }
+  
+  .category-img-wrapper {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--primary-accent);
+    padding: 5px;
+  }
+  
+  .category-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  
+  .category-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    #heroCarousel {
+      height: 300px;
+    }
+    
+    #heroCarousel .carousel-item img {
+      height: 300px;
+    }
+    
+    .carousel-caption {
+      max-width: 80%;
+      padding: 1rem;
+      bottom: 1rem;
+    }
+    
+    .carousel-caption h2 {
+      font-size: 1.5rem;
+    }
+    
+    .product-card {
+      flex: 0 0 160px;
+    }
+    
+    .product-image {
+      height: 140px;
+    }
+    
+    .slider-nav {
+      width: 30px;
+      height: 30px;
+      opacity: 1;
+    }
+    
+    .slider-nav.prev {
+      left: -10px;
+    }
+    
+    .slider-nav.next {
+      right: -10px;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Scrolls the slider horizontally
+   * @param {HTMLElement} sliderContainer - The container element of the slider
+   * @param {number} direction - 1 for right, -1 for left
+   */
+  function scrollSlider(sliderContainer, direction) {
+    const slider = sliderContainer.querySelector('.product-slider');
+    if (!slider) return;
+    
+    // Calculate scroll amount based on product card width + gap
+    const firstCard = slider.querySelector('.product-card');
+    if (!firstCard) return;
+    
+    const cardStyle = window.getComputedStyle(firstCard);
+    const gap = parseInt(window.getComputedStyle(slider).gap) || 0;
+    const scrollAmount = (firstCard.offsetWidth + gap) * direction;
+    
+    slider.scrollBy({
+      left: scrollAmount,
+      behavior: 'smooth'
+    });
+  }
+  
+  // Initialize sliders to show a bit of next items as peek
+  document.addEventListener('DOMContentLoaded', function() {
+    const sliders = document.querySelectorAll('.product-slider');
+    sliders.forEach(slider => {
+      slider.style.scrollPadding = '0 40px';
+    });
+  });
+</script>
+{% endblock %}

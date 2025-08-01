@@ -1,0 +1,55 @@
+<!-- analytics.html -->
+{% extends 'dashboard/base.html' %}
+
+{% block title %}User Behavior Analytics{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h4>User Interaction Tracking</h4>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <canvas id="interactionChart"></canvas>
+                </div>
+                <div class="col-md-6">
+                    <canvas id="pageViewsChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Page URL</th>
+                            <th>Action</th>
+                            <th>Metadata</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for track in tracking_data %}
+                        <tr>
+                            <td>{{ track.timestamp|date:"M d, Y H:i" }}</td>
+                            <td>{{ track.user.email|default:"Anonymous" }}</td>
+                            <td class="text-truncate" style="max-width: 200px;">{{ track.page_url }}</td>
+                            <td><span class="badge bg-info">{{ track.action }}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-secondary" 
+                                        data-bs-toggle="popover" 
+                                        title="Tracking Data"
+                                        data-content="{{ track.metadata }}">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

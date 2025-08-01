@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - {% block title %}{% endblock %}</title>
+    <link href="{% static 'dashboard/css/admin.min.css' %}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="admin-panel">
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="bg-dark">
+            <div class="sidebar-header">
+                <h3>Admin Dashboard</h3>
+                <p class="text-muted small">{{ request.user.email }}</p>
+            </div>
+            <ul class="list-unstyled components">
+                <li class="{% if active_tab == 'dashboard' %}active{% endif %}">
+                    <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+                </li>
+                <li class="{% if active_tab == 'products' %}active{% endif %}">
+                    <a href="{% url 'admin_products' %}">Product Management</a>
+                </li>
+                <li class="{% if active_tab == 'orders' %}active{% endif %}">
+                    <a href="{% url 'admin_orders' %}">Order Management</a>
+                </li>
+                <li class="{% if active_tab == 'users' %}active{% endif %}">
+                    <a href="{% url 'admin_users' %}">Customer Management</a>
+                </li>
+                <li class="{% if active_tab == 'analytics' %}active{% endif %}">
+                    <a href="{% url 'pixel_data' %}">Behavior Analytics</a>
+                </li>
+                {% if request.user.is_superadmin %}
+                <li class="admin-only">
+                    <a href="/admin/">Django Admin</a>
+                </li>
+                {% endif %}
+            </ul>
+            <div class="logout-section">
+                <a href="{% url 'admin_logout' %}" class="btn btn-danger">Log Out</a>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    // In base template
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/track-pixel/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                'page_url': window.location.href,
+                'action': 'page_view',
+                'metadata': {
+                    'scroll_depth': 0,
+                    'elements_clicked': []
+                }
+            })
+        });
+    });
+    </script>
+    <!-- Scripts -->
+    <script src="{% static 'dashboard/js/admin.js' %}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+
+

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Order Details</h2>
+    
+    <!-- Order Info -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Order #{{ order.id }}</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Order Date:</strong> {{ order.date }}</p>
+            <p><strong>Status:</strong> <span class="badge bg-info">{{ order.status }}</span></p>
+            <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
+        </div>
+    </div>
+
+    <!-- Customer Information -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Shipping Information</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Name:</strong> {{ order.customer.full_name }}</p>
+            <p><strong>Phone:</strong> {{ order.customer.phone }}</p>
+            <p><strong>Email:</strong> {{ order.customer.email }}</p>
+            <p><strong>Address:</strong> {{ order.customer.street }}, {{ order.customer.city }}, {{ order.customer.state }}, {{ order.customer.postal_code }}, {{ order.customer.country }}</p>
+        </div>
+    </div>
+
+    <!-- Ordered Items -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Ordered Items</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group mb-3">
+                {% for item in order.items.all %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ item.product.name }}</strong>
+                        <small class="text-muted d-block">Qty: {{ item.quantity }}</small>
+                    </div>
+                    <span class="text-muted">PKR {{ item.subtotal }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <h5 class="text-right"><strong>Total: PKR {{ order.total }}</strong></h5>
+        </div>
+    </div>
+
+    <a href="{% url 'profile' %}" class="btn btn-secondary">Back to Orders</a>
+</div>
+
+{% endblock %}

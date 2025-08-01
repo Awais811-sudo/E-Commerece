@@ -1,0 +1,22 @@
+{% load math_filter %}
+<span class="star-rating">
+{% comment %} 
+  Expects a variable 'rating' passed in the context.
+  Displays full, half, and empty stars based on a 5-star system.
+{% endcomment %}
+
+{% with current_rating=rating|default:0 %}
+    {% for i in "12345" %}
+        {% with star_value=i|float %}
+        {% if current_rating >= star_value %}
+        <i class="fas fa-star" style="color: gold;"></i>
+    {% elif current_rating >= star_value|add:"-0.5"|float %}
+        <i class="fas fa-star-half-alt" style="color: gold;"></i>
+    {% else %}
+        <i class="far fa-star" style="color: gold;"></i>
+    {% endif %}
+    
+        {% endwith %}
+    {% endfor %}
+{% endwith %}
+</span>

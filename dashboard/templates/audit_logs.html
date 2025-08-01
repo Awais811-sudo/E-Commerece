@@ -1,0 +1,30 @@
+<!-- audit_logs.html -->
+<div class="card">
+    <div class="card-header">
+        <h4>Admin Activity Log</h4>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Admin</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in audit_logs %}
+                    <tr>
+                        <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+                        <td>{{ log.user.email }}</td>
+                        <td>{{ log.action }}</td>
+                        <td class="text-truncate" style="max-width: 200px;">{{ log.details }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

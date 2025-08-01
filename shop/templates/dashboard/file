@@ -1,0 +1,26 @@
+        <!-- <li>    
+            <a href="{% url 'admin:auth_user_changelist' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 group">
+                <i class="fas fa-users mr-3"></i>
+                <span>Customers</span>
+            </a>
+        </li>
+        {% if 'reviews' in installed_apps %}
+        <li>
+            <a href="{% url 'admin:reviews_review_changelist' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 group">
+                <i class="fas fa-star mr-3"></i>
+                <span>Reviews</span>
+            </a>
+        </li>
+        {% endif %}
+        <li>
+            <a href="{% url 'admin:index' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 group">
+                <i class="fas fa-cog mr-3"></i>
+                <span>Admin Panel</span>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'admin:shop_product_changelist' %}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 group">
+                <i class="fas fa-shopping-bag mr-3"></i>
+                <span>Products</span>
+            </a>
+        </li> -->

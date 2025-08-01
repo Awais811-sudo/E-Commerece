@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Checkout</h2>
+    <div class="row">
+        <!-- Left Side: Address Form -->
+        <div class="col-md-7">
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label for="id_full_name">Full Name</label>
+                    <input type="text" name="full_name" id="id_full_name" class="form-control"
+                        placeholder="Enter your full name" value="{{ default_address.full_name|default:'' }}" required>
+                </div>
+
+                <!-- Phone Number -->
+                <div class="form-group">
+                    <label for="id_phone">Phone Number</label>
+                    <input type="text" name="phone" id="id_phone" class="form-control"
+                        placeholder="Enter your phone number" value="{{ default_address.phone|default:'' }}" required>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="id_email">Email</label>
+                    <input type="email" name="email" id="id_email" class="form-control"
+                        placeholder="Enter your email" value="{{ default_address.email|default:'' }}" required>
+                </div>
+
+                <!-- Street Address -->
+                <div class="form-group">
+                    <label for="id_street">Street Address</label>
+                    <input type="text" name="street" id="id_street" class="form-control"
+                        placeholder="Enter your street address" value="{{ default_address.street|default:'' }}" required>
+                </div>
+
+                <!-- City -->
+                <div class="form-group">
+                    <label for="id_city">City</label>
+                    <input type="text" name="city" id="id_city" class="form-control"
+                        placeholder="Enter your city" value="{{ default_address.city|default:'' }}" required>
+                </div>
+
+                <!-- State -->
+                <div class="form-group">
+                    <label for="id_state">State</label>
+                    <input type="text" name="state" id="id_state" class="form-control"
+                        placeholder="Enter your state" value="{{ default_address.state|default:'' }}" required>
+                </div>
+
+                <!-- Postal Code -->
+                <div class="form-group">
+                    <label for="id_postal_code">Postal Code</label>
+                    <input type="text" name="postal_code" id="id_postal_code" class="form-control"
+                        placeholder="Enter your postal code" value="{{ default_address.postal_code|default:'' }}" required>
+                </div>
+
+                <!-- Country -->
+                <div class="form-group">
+                    <label for="id_country">Country</label>
+                    <input type="text" name="country" id="id_country" class="form-control"
+                        placeholder="Enter your country" value="{{ default_address.country|default:'' }}" required>
+                </div>
+
+                <!-- Payment Method (Only Cash on Delivery) -->
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <input type="text" class="form-control" value="Cash on Delivery" readonly>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-block mt-3">Place Order</button>
+            </form>
+        </div>
+
+        <!-- Right Side: Order Summary -->
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Order Summary</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group mb-3">
+                        {% for item in cart_items %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ item.product.name }}</strong>
+                                <small class="text-muted d-block">Qty: {{ item.quantity }}</small>
+                            </div>
+                            <span class="text-muted">PKR {{ item.subtotal }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <h5 class="text-right"><strong>Total: PKR {{ total }}</strong></h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

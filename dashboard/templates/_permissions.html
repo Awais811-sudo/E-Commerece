@@ -1,0 +1,8 @@
+<!-- _permissions.html -->
+{% load dashboard_tags %}
+
+{% if request.user|has_permission:'view_analytics' %}
+<li class="{% if active_tab == 'analytics' %}active{% endif %}">
+    <a href="{% url 'pixel_data' %}">Behavior Analytics</a>
+</li>
+{% endif %}

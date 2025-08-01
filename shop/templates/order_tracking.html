@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Order Tracking</h2>
+
+<!-- Current Orders -->
+<h3>Active Orders</h3>
+{% for order in active_orders %}
+    <div>
+        <p>Order #{{ order.id }} - Status: {{ order.get_status_display }}</p>
+        <p>Total: ${{ order.total }}</p>
+    </div>
+{% empty %}
+    <p>No active orders.</p>
+{% endfor %}
+
+<!-- Order History -->
+<h3>Order History</h3>
+{% for order in delivered_orders %}
+    <div>
+        <p>Order #{{ order.id }} - Delivered on {{ order.updated_at|date }}</p>
+        <p>Total: ${{ order.total }}</p>
+    </div>
+{% empty %}
+    <p>No past orders.</p>
+{% endfor %}
+
+{% endblock %}

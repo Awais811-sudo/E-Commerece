@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div style="display: none;">{% csrf_token %}</div>
+<div class="container mt-4">
+    <h3>Your Cart</h3>
+    {% if cart_items %}
+    <div class="card shadow p-3 mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                {% for item in cart_items %}
+                {% with item.product.images.all as product_images %}
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2" 
+                     id="cart-item-{{ item.product.id }}"
+                     data-unit-price="{% if item.variant and item.variant.additional_price is not None %}{{ item.variant.additional_price }}{% elif item.product.discount_price %}{{ item.product.discount_price }}{% else %}{{ item.product.price }}{% endif %}">
+                    <div class="d-flex align-items-center">
+                        <img src="{% if product_images|length %}{{ product_images.0.image.url }}{% else %}{% static 'placeholder.png' %}{% endif %}" 
+                             alt="{{ item.product.name }}" 
+                             class="rounded me-3" 
+                             style="width: 80px; height: 80px; object-fit: contain;">
+                        <div>
+                            <h5 class="mb-1">{{ item.product.name }}</h5>
+                            <p class="mb-0 text-muted">
+                                Rs <span class="item-price">
+                                    {% if item.variant and item.variant.additional_price is not None %}
+                                        {{ item.variant.additional_price }}
+                                    {% elif item.product.discount_price %}
+                                        {{ item.product.discount_price }}
+                                    {% else %}
+                                        {{ item.product.price }}
+                                    {% endif %}
+                                </span>
+                            </p>
+                            {% if item.variant %}
+                            <small class="text-muted">
+                                {% if item.variant.wattage %}{{ item.variant.wattage }}W{% endif %}
+                                {% if item.variant.color %} - {{ item.variant.color }}{% endif %}
+                                {% if item.variant.shape %} - {{ item.variant.shape }}{% endif %}
+                                {% if item.variant.size %} - {{ item.variant.size }}{% endif %}
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="quantity-controls">
+                            <button class="btn btn-sm btn-outline-secondary update-cart" 
+                                    data-action="decrease"
+                                    {% if item.quantity == 1 %}disabled{% endif %}>
+                                -
+                            </button>
+                            <span class="mx-2 item-quantity">{{ item.quantity }}</span>
+                            <button class="btn btn-sm btn-outline-secondary update-cart" 
+                                    data-action="increase">
+                                +
+                            </button>
+                        </div>
+                        <p class="mb-0 ms-4">Rs <span class="item-subtotal">{{ item.subtotal|floatformat:2 }}</span></p>
+                        <button class="btn btn-sm btn-outline-danger ms-3 update-cart" 
+                                data-action="remove">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="text-end">
+        <h4>Total: Rs <span id="cart-total">{{ total|floatformat:2 }}</span></h4>
+        <a href="/checkout/" class="btn btn-primary btn-lg">Checkout</a>
+    </div>
+
+    <!-- Recommended Products Section -->
+    <hr class="my-4">
+    <h3>Recommended Products</h3>
+    {% if recommended_products %}
+    <div class="row row-cols-2 row-cols-lg-5 g-4">
+        {% for product in recommended_products %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                {% with product.images.all as p_imgs %}
+                <img src="{% if p_imgs|length %}{{ p_imgs.0.image.url }}{% else %}{% static 'placeholder.png' %}{% endif %}" 
+                     class="card-img-top" alt="{{ product.name }}"
+                     style="width: 100%; height: 200px; object-fit: cover;">
+                {% endwith %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="card-text">
+                        Price: Rs {{ product.price }}<br>
+                        {% if product.discount_price %}
+                            <span class="text-danger">Discount: Rs {{ product.discount_price }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'product_detail' product.slug %}" class="btn btn-primary">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No recommended products available.</p>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5">
+        <h4>Your cart is empty</h4>
+        <a href="{% url 'shop' %}" class="btn btn-primary mt-3">Continue Shopping</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    async function handleCartAction(productId, action) {
+        try {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const response = await fetch(`/cart/update/${productId}/${action}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Request failed');
+            if (!data.success) throw new Error(data.error || 'Action failed');
+            updateCartUI(data, productId);
+        } catch (error) {
+            console.error('Error:', error);
+            showToast(error.message, 'error');
+            return false;
+        }
+    }
+
+    function updateCartUI(data, productId) {
+        const itemElement = document.getElementById(`cart-item-${productId}`);
+        if (itemElement) {
+            const quantityElement = itemElement.querySelector('.item-quantity');
+            quantityElement.textContent = data.quantity;
+            const subtotalElement = itemElement.querySelector('.item-subtotal');
+            subtotalElement.textContent = parseFloat(data.subtotal).toFixed(2);
+            const decreaseBtn = itemElement.querySelector('[data-action="decrease"]');
+            decreaseBtn.disabled = data.quantity <= 1;
+        }
+        const totalElement = document.getElementById('cart-total');
+        if (totalElement) {
+            totalElement.textContent = parseFloat(data.total).toFixed(2);
+        }
+        document.querySelectorAll('.cart-count').forEach(el => {
+            el.textContent = data.cart_count;
+        });
+        if (data.removed) {
+            itemElement.style.opacity = '0';
+            setTimeout(() => {
+                itemElement.remove();
+                if (data.cart_count === 0) {
+                    window.location.reload();
+                }
+            }, 300);
+        }
+    }
+
+    document.querySelectorAll('.update-cart').forEach(button => {
+        button.addEventListener('click', async function() {
+            const productId = this.closest('[id^="cart-item-"]').id.split('-')[2];
+            const action = this.dataset.action;
+            if (action === 'remove' && !confirm('Remove this item?')) return;
+            this.disabled = true;
+            try {
+                await handleCartAction(productId, action);
+            } finally {
+                this.disabled = false;
+            }
+        });
+    });
+
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+});
+</script>
+{% endblock %}

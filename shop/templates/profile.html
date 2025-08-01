@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" class="rounded-circle mb-3" width="150" height="150">
+                    {% endif %}
+                    <h4>{{ user.get_full_name }}</h4>
+                    <p class="text-muted">{{ user.email }}</p>
+                    <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary btn-sm">Edit Profile</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Address Book</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'manage_address' %}" class="btn btn-primary mb-3">Add New Address</a>
+                    {% for address in addresses %}
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <p class="mb-1">{{ address.street }}</p>
+                            <p class="mb-1">{{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
+                            <p class="mb-1">{{ address.country }}</p>
+                            {% if address.is_default %}<span class="badge bg-primary">Default</span>{% endif %}
+                            <div class="mt-2">
+                                <a href="{% url 'manage_address' address.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="container py-5">
+                <h2>Your Orders</h2>
+                
+                <!-- Current Orders -->
+                <div class="current-orders mb-5">
+                    <h4>Active Orders</h4>
+                    {% for order in active_orders %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5>Order #{{ order.id }}</h5>
+                                    <p class="mb-1">Status: {{ order.get_status_display }}</p>
+                                    <small class="text-muted">Placed on {{ order.created_at|date }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <p class="h5">${{ order.total }}</p>
+                                    <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="alert alert-info">No active orders found</div>
+                    {% endfor %}
+                </div>
+            
+                <!-- Order History -->
+                <div class="order-history">
+                    <h4>Order History</h4>
+                    {% for order in delivered_orders %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5>Order #{{ order.id }}</h5>
+                                    <p class="mb-1">Delivered on {{ order.updated_at|date }}</p>
+                                </div>
+                                <div class="text-end">
+                                    <p class="h5">${{ order.total }}</p>
+                                    <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-outline-secondary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="alert alert-info">No order history found</div>
+                    {% endfor %}
+                </div>
+            </div>
+    <hr>
+
+    <!-- Logout Button -->
+    <a href="{% url 'logout_view' %}" class="btn btn-danger">Logout</a>
+</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

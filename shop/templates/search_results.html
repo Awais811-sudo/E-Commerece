@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container my-5">
+    <!-- Search Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">Search Results for "{{ query }}"</h2>
+            <form method="get" action="{% url 'search' %}" class="search-form">
+                <div class="input-group">
+                    <input type="text" 
+                           name="q" 
+                           value="{{ query }}" 
+                           id="search-input" 
+                           class="form-control form-control-lg" 
+                           placeholder="Search products..."
+                           aria-label="Search products">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Autocomplete Results -->
+    <div id="autocomplete-results" class="autocomplete-dropdown"></div>
+
+    <div class="row">
+        {% if results %}
+            {% for product in results %}
+            <div class="col-lg-5th col-md-4 col-sm-6 col-6 mb-4">
+                <div class="card h-100 product-card">
+                    <a href="{% url 'product_detail' product.slug %}">
+                        <img src="{{ product.image.url }}" 
+                             class="card-img-top cart-img" 
+                             alt="{{ product.name }}"
+                             onerror="this.onerror=null;this.src='{% static 'images/placeholder.png' %}'">
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a href="{% url 'product_detail' product.slug %}" class="text-decoration-none text-dark">
+                                {{ product.name }}
+                            </a>
+                        </h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="h5 text-primary">Rs {{ product.price }}</span>
+                            {% if product.stock > 0 %}
+                                <span class="badge bg-success">In Stock</span>
+                            {% else %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-center mt-2">
+                            <button class="btn btn-outline-primary cart-btn">
+                                <i class="bi bi-cart"></i> Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+       
+    </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info mb-4">
+                    <h4>No exact matches found for "{{ query }}"</h4>
+                    <p class="mb-0">Try these similar products:</p>
+                </div>
+                
+                <div class="row">
+                    {% for product in similar_products %}
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+                        <div class="card h-100">
+                            <a href="{% url 'product_detail' product.slug %}">
+                                <img src="{{ product.image.url }}" 
+                                     class="card-img-top cart-img" 
+                                     alt="{{ product.name }}"
+                                     onerror="this.onerror=null;this.src='{% static 'images/placeholder.png' %}'">
+                            </a>
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <a href="{% url 'product_detail' product.id %}" 
+                                       class="text-decoration-none text-dark small">
+                                        {{ product.name|truncatechars:40 }}
+                                    </a>
+                                </h6>
+                                <div class="text-muted small">Rs {{ product.price }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            No similar products found. Try a different search term.
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if results.paginator.num_pages > 1 %}
+    <nav aria-label="Search results pagination">
+        <ul class="pagination justify-content-center">
+            {% if results.has_previous %}
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?q={{ query }}&page={{ results.previous_page_number }}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in results.paginator.page_range %}
+            <li class="page-item {% if num == results.number %}active{% endif %}">
+                <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            
+            {% if results.has_next %}
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?q={{ query }}&page={{ results.next_page_number }}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+    /* Custom class for 5-column layout */
+    @media (min-width: 1200px) {
+        .col-lg-5th {
+            width: 20%;
+            flex: 0 0 20%;
+            max-width: 20%;
+        }
+    }
+
+    /* Fixed cart image size */
+    .cart-img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+
+    /* Fixed cart button size */
+    .cart-btn {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+    }
+    .search-form {
+        position: relative;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .autocomplete-dropdown {
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: none;
+    }
+
+    .autocomplete-item {
+        padding: 10px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .autocomplete-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .product-card {
+        transition: transform 0.2s;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    
+</style>
+
+<script>
+$(document).ready(function() {
+    let timeout;
+    const $input = $('#search-input');
+    const $dropdown = $('#autocomplete-results');
+
+    $input.on('input', function() {
+        clearTimeout(timeout);
+        const query = $(this).val().trim();
+        
+        if (query.length < 2) {
+            $dropdown.hide();
+            return;
+        }
+
+        timeout = setTimeout(() => {
+            $.getJSON('/autocomplete/', {term: query}, function(data) {
+                $dropdown.empty();
+                if (data.length) {
+                    data.forEach(item => {
+                        $dropdown.append(
+                            `<div class="autocomplete-item">${item}</div>`
+                        );
+                    });
+                    $dropdown.show();
+                } else {
+                    $dropdown.hide();
+                }
+            });
+        }, 300);
+    });
+
+    $(document).on('click', '.autocomplete-item', function() {
+        $input.val($(this).text());
+        $dropdown.hide();
+        $input.closest('form').submit();
+    });
+
+    $(document).click(function(e) {
+        if (!$(e.target).closest('#search-input, #autocomplete-results').length) {
+            $dropdown.hide();
+        }
+    });
+});
+</script>
+
+{% endblock %}
