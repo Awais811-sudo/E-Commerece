@@ -488,6 +488,17 @@ def home(request):
     }
     return render(request, 'home.html', context)
 
+def category_view(request, slug):
+    category = get_object_or_404(Category, slug=slug)
+    products = Product.objects.filter(category=category)
+
+    context = {
+        'category': category,
+        'products': products,
+        'categories': Category.objects.all()  # if you want sidebar filters
+    }
+    return render(request, 'category.html', context)
+
 @require_POST
 def add_to_cart(request, product_id):
     try:

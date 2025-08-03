@@ -93,7 +93,7 @@
     <div class="row g-3 g-md-4">
       {% for category in categories %}
       <div class="col-6 col-md-3 col-lg-2">
-        <a href="#" class="category-card">
+        <a href="{% url 'category_view' category.slug %}" class="category-card">
           <div class="category-img-wrapper">
             <img src="{{ category.image.url }}" class="img-fluid" alt="{{ category.name }}">
           </div>
@@ -124,11 +124,18 @@
           <div class="product-image">
             <a href="{% url 'product_detail' product.slug %}">
               {% if product.images.first %}
-  <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
-{% else %}
-  <img src="{% static 'placeholder.png' %}" alt="No image">
-{% endif %}
+              <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+            {% else %}
+              <img src="{% static 'placeholder.png' %}" alt="No image">
+            {% endif %}
             </a>
+            <form method="POST" action="{% url 'add_to_wishlist' product.id %}" class="wishlist-form">
+              {% csrf_token %}
+              <button type="submit" class="wishlist-btn">
+                <i class="bi {% if product in wishlist_items %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+
+              </button>
+            </form>
           </div>
           <div class="product-body">
             <h5 class="product-title">{{ product.name }}</h5>
@@ -144,7 +151,10 @@
               <span class="current-price">Rs {{ product.price }}</span>
               {% endif %}
             </div>
-            <button class="btn btn-sm btn-primary w-100 mt-2">Add to Cart</button>
+            <form method="POST" action="{% url 'add_to_cart' product.id %}" class="add-to-cart-form">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-primary w-100 mt-2">Add to Cart</button>
+            </form>
           </div>
         </div>
         {% endfor %}
@@ -250,7 +260,7 @@
   .product-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     transition: transform 0.5s;
   }
   
@@ -344,7 +354,7 @@
   .category-img-wrapper img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 50%;
   }
   
@@ -395,9 +405,123 @@
       right: -10px;
     }
   }
+
+  /* Wishlist Heart Button */
+.wishlist-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  padding: 6px 8px;
+  z-index: 10;
+  font-size: 1.2rem;
+  color: #ff4d4f;
+  transition: all 0.3s ease;
+}
+
+/* .wishlist-btn:hover {
+  background-color: #ffecec;
+  color: #d80000;
+} */
+
+.wishlist-btn i.bi-heart-fill {
+  color: #d80000;
+}
+
 </style>
 
+
+  
 <script>
+  function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+      <span class="toast-icon">${type === 'success' ? '✓' : '⚠'}</span>
+      <span class="toast-message">${message}</span>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // ADD TO CART FORMS
+    document.querySelectorAll('.add-to-cart-form').forEach(form => {
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const button = form.querySelector('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
+
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: new FormData(form)
+          });
+          const data = await response.json();
+          if (data.success) {
+            showToast('Product added to cart!');
+            // Update cart count
+            document.querySelectorAll('.badge-notification').forEach(el => {
+              if (el.closest('a[href*="cart"]')) {
+                el.textContent = data.cart_count;
+              }
+            });
+          } else {
+            showToast(data.error || 'Failed to add to cart', 'error');
+          }
+        } catch {
+          showToast('Network error. Please try again.', 'error');
+        } finally {
+          button.innerHTML = originalText;
+        }
+      });
+    });
+
+    // WISHLIST HEART
+    document.querySelectorAll('.wishlist-form').forEach(form => {
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const button = form.querySelector('button');
+        const icon = button.querySelector('i');
+        const originalHTML = icon.outerHTML;
+
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: new FormData(form)
+          });
+          const data = await response.json();
+          if (data.success) {
+            showToast('Wishlist updated!');
+            icon.classList.toggle('bi-heart');
+            icon.classList.toggle('bi-heart-fill');
+
+            document.querySelectorAll('.badge-notification').forEach(el => {
+              if (el.closest('a[href*="wishlist"]')) {
+                el.textContent = data.wishlist_count;
+              }
+            });
+          } else {
+            showToast(data.error || 'Failed to update wishlist', 'error');
+          }
+        } catch {
+          showToast('Network error. Please try again.', 'error');
+        }
+      });
+    });
+  });
+
+
+
   /**
    * Scrolls the slider horizontally
    * @param {HTMLElement} sliderContainer - The container element of the slider

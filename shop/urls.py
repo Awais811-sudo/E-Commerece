@@ -33,7 +33,7 @@ urlpatterns = [
     path('address/<int:address_id>/', views.manage_address, name='manage_address'),
     path('wishlist/add/<int:product_id>/', views.add_to_wishlist, name='add_to_wishlist'),
     path('wishlist/delete/<int:item_id>/', views.delete_wishlist_item, name='delete_wishlist_item'),
-
+    path('category/<slug:slug>/', views.category_view, name='category_view'),
 
 
 
