@@ -1,13 +1,16 @@
 {% load static %}
+{% load json_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Newgate{% endblock %}</title>
+    <title>{% block title %}Brand Village{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="{% static 'images/farm.png' %}">
+
     <style>
         :root {
             --primary-dark: #4936A2;
@@ -109,9 +112,18 @@
             width: 18px;
             height: 18px;
             font-size: 0.65rem;
-            display: flex;
+            display: flex !important;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+        .badge-notification[data-count="0"],
+        .badge-notification:empty,
+        .badge-notification:contains("0") {
+            background-color: rgba(239, 68, 68, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            min-width: 18px;
         }
         
         /* Search Bar Styles */
@@ -143,7 +155,10 @@
             margin-left: -45px;
             transition: all 0.3s ease;
         }
-        
+        .text-decoration-none {
+            color: var(--primary-dark);
+            
+        }
         .search-button:hover {
             background-color: #7015ef;
         }
@@ -181,6 +196,62 @@
             z-index: 1020;
         }
         
+        /* Toast Notifications */
+        .toast-notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            min-width: 250px;
+            max-width: 350px;
+        }
+        
+        .toast-notification.show {
+            transform: translateX(0);
+        }
+        
+        .toast-notification i {
+            font-size: 1.2rem;
+        }
+        
+        .toast-success {
+            background: #00C851;
+            color: white;
+            border-left: 4px solid #007E33;
+        }
+        
+        .toast-error {
+            background: #ef4444;
+            color: white;
+            border-left: 4px solid #b91c1c;
+        }
+        
+        .toast-warning {
+            background: #ff9800;
+            color: white;
+            border-left: 4px solid #f57c00;
+        }
+        .btn-primary {
+        background-color: var(--primary-dark);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        transition: var(--transition);
+        flex: 1;
+        cursor: pointer;
+        position: relative;
+    }
         /* Responsive Adjustments */
         @media (max-width: 992px) {
             body {
@@ -204,44 +275,43 @@
             }
         }
         
-        /* Toast Notifications */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            z-index: 10000;
-            animation: slideIn 0.3s ease-out;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        
-        .toast.error {
-            background: var(--danger);
-            color: white;
-        }
-        
-        .toast.success {
-            background: #00C851;
-            color: white;
-        }
-        
+        /* Animations */
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        
+        .loading {
+            animation: pulse 1s infinite;
+        }
     </style>
 </head>
-<body>
+<body data-wishlist-ids='{{ wishlist_product_ids|default:"[]"|safe }}'>
     <!-- Modern Navbar -->
     <nav class="navbar navbar-main navbar-expand-lg navbar-dark">
         <div class="container">
             <!-- Brand & Mobile Toggle -->
-             <img src="{% static 'images/farm.png' %}" alt="village icon" class="logo-icon">
-             <div class="flex" >
-                 <a class="navbar-brand" href="{% url 'home' %}">Brand Village</a>
-                 <h6 class="text-white">All brand together</h6>
-                </div>
+            <img src="{% static 'images/farm.png' %}" alt="village icon" class="logo-icon">
+            <div class="flex" >
+                <a class="navbar-brand" href="{% url 'home' %}">Brand Village</a>
+                <h6 class="text-white">All brand together</h6>
+            </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -264,28 +334,25 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'shop' %}">Shop</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">About</a></li>
-                    
+                    <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">Portfolio</a></li>
                 </ul>
                 
                 <!-- Action Icons -->
                 <div class="d-flex align-items-center">
                     <!-- Mobile Search Toggle -->
-                    <a href="#" class="nav-icon d-lg-none me-2" id="toggleMobileSearch">
+                    <a href="{% url 'search' %}" class="nav-icon d-lg-none me-2" id="toggleMobileSearch">
                         <i class="bi bi-search"></i>
                     </a>
                     
                     <!-- Wishlist -->
-                    <a href="{% url 'wishlist' %}" class="nav-icon position-relative me-2">
-                        {% if wishlist_count and wishlist_count > 0 %}
-                            <span class="badge-notification">{{ wishlist_count }}</span>
-                        {% endif %}
+                    <a href="{% url 'wishlist' %}" class="nav-icon position-relative me-2" id="wishlist-link">
+                        <span class="badge-notification" id="wishlist-badge">{{ wishlist_count|default:0 }}</span>>
                         <i class="bi bi-heart"></i>
                     </a>
-                    
+
                     <!-- Cart -->
-                    <a href="{% url 'cart' %}" class="nav-icon position-relative me-2">
-                        <span class="badge-notification">{{ cart_count }}</span>
+                    <a href="{% url 'cart' %}" class="nav-icon position-relative me-2" id="cart-link">
+                        <span class="badge-notification" id="cart-badge">{{ cart_count|default:0 }}</span>
                         <i class="bi bi-cart"></i>
                     </a>
                     
@@ -342,9 +409,9 @@
                 <div class="col-md-4">
                     <h5 class="mb-3">Contact Us</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +92 300 1234567</li>
-                        <li class="mb-2"><i class="fas fa-envelope me-2"></i> support@newgate.com</li>
-                        <li><i class="fas fa-map-marker-alt me-2"></i> Main Street, Karachi</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +92 371 0048010</li>
+                        <li class="mb-2"><i class="fas fa-envelope me-2"></i> brandvillage1@gmail.com</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i> Lower Mall Road, Lahore</li>
                     </ul>
                 </div>
                 <div class="col-md-4">
@@ -358,24 +425,292 @@
                 <div class="col-md-4">
                     <h5 class="mb-3">Follow Us</h5>
                     <div class="social-links">
-                        <a href="#" class="text-white me-3 fs-5"><i class="fab fa-facebook"></i></a>
-                        <a href="#" class="text-white me-3 fs-5"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-white me-3 fs-5"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-white fs-5"><i class="fab fa-linkedin"></i></a>
+                        <a href="https://www.facebook.com/profile.php?id=100066765019267" class="text-white me-3 fs-5"><i class="fab fa-facebook"></i></a>
+                        <a href="https://www.instagram.com/brandvillage.shop/" class="text-white me-3 fs-5"><i class="fab fa-instagram"></i></a>
+                        <a href="https://tiktok.com/brandvillage19" class="text-white fs-5"><i class="fab fa-tiktok"></i></a>
                     </div>
                 </div>
             </div>
             <hr class="my-4">
             <div class="text-center">
-                <p class="mb-0">&copy; 2023 Newgate. All rights reserved.</p>
+                <p class="mb-0">&copy; 2023 BrandVillage. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
+    {{ wishlist_product_ids|json_script:"wishlist-data" }}
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
+        // ==================== GLOBAL REAL-TIME CART & WISHLIST MANAGEMENT ====================
+        
+        // Global state management
+        window.wishlistProducts = new Set();
+        window.csrfToken = null;
+        
+        // Initialize CSRF token
+        function getCSRFToken() {
+            if (!window.csrfToken) {
+                const tokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+                window.csrfToken = tokenElement ? tokenElement.value : 
+                    document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+            }
+            return window.csrfToken;
+        }
+        
+        // Initialize wishlist state from page data
+        function initializeWishlistState() {
+            try {
+                // From JSON script tag
+                const wishlistData = document.getElementById('wishlist-data');
+                if (wishlistData && wishlistData.textContent) {
+                    const initialIds = JSON.parse(wishlistData.textContent);
+                    window.wishlistProducts = new Set(initialIds);
+                }
+                
+                // Update all heart icons on page load
+                window.wishlistProducts.forEach(productId => {
+                    updateAllHeartIcons(productId, true);
+                });
+            } catch (e) {
+                console.log('Could not initialize wishlist state:', e);
+            }
+        }
+        
+        // Update all heart icons for a specific product
+        function updateAllHeartIcons(productId, isInWishlist) {
+            // Update global state
+            if (isInWishlist) {
+                window.wishlistProducts.add(productId);
+            } else {
+                window.wishlistProducts.delete(productId);
+            }
+            
+            // Find ALL heart icons for this product and update them
+            document.querySelectorAll(`
+                .wishlist-btn[data-product-id="${productId}"] i,
+                .wishlist-btn[data-product="${productId}"] i,
+                button[data-product-id="${productId}"] i.bi-heart,
+                button[onclick*="${productId}"] i.bi-heart,
+                [data-product-id="${productId}"] .wishlist-btn i
+            `).forEach(icon => {
+                if (isInWishlist) {
+                    icon.className = 'bi bi-heart-fill text-danger';
+                    icon.closest('.wishlist-btn')?.classList.add('active');
+                } else {
+                    icon.className = 'bi bi-heart';
+                    icon.closest('.wishlist-btn')?.classList.remove('active');
+                }
+            });
+        }
+        
+        // Update header counts via AJAX
+        async function updateHeaderCounts() {
+            try {
+                const response = await fetch('/api/header-counts/', {
+                    headers: { 
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const data = await response.json();
+                
+                // Update cart badge
+                const cartBadge = document.getElementById('cart-badge');
+                if (cartBadge) {
+                    cartBadge.textContent = data.cart_count || 0;
+                    animateBadge(cartBadge);
+                }
+                
+                // Update wishlist badge
+                const wishlistBadge = document.getElementById('wishlist-badge');
+                if (wishlistBadge) {
+                    wishlistBadge.textContent = data.wishlist_count || 0;
+                    animateBadge(wishlistBadge);
+                }
+            } catch (error) {
+                console.error('Error updating header counts:', error);
+            }
+        }
+        
+        // Animate badge
+        function animateBadge(badge) {
+            badge.style.transform = 'scale(1.3)';
+            setTimeout(() => {
+                badge.style.transform = 'scale(1)';
+            }, 300);
+        }
+        
+        // Add item to cart
+        async function addToCart(productId, variantId = null, button = null) {
+            // Save original button state
+            let originalContent = null;
+            if (button) {
+                originalContent = button.innerHTML;
+                button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                button.disabled = true;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('csrfmiddlewaretoken', getCSRFToken());
+                if (variantId) {
+                    formData.append('variant_id', variantId);
+                }
+                
+                const response = await fetch(`/add-to-cart/${productId}/`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update header counts
+                    updateHeaderCounts();
+                    
+                    // Show success message
+                    showToast(data.message || 'Item added to cart!', 'success');
+                    
+                    // Update button state
+                    if (button) {
+                        button.innerHTML = '<i class="bi bi-cart-check-fill"></i> Added!';
+                        button.classList.remove('btn-primary');
+                        button.classList.add('btn-success');
+                        
+                        // Revert after 2 seconds
+                        setTimeout(() => {
+                            button.innerHTML = originalContent;
+                            button.classList.remove('btn-success');
+                            button.classList.add('btn-primary');
+                            button.disabled = false;
+                        }, 2000);
+                    }
+                } else {
+                    showToast('Error: ' + (data.error || 'Failed to add item'), 'error');
+                    if (button) {
+                        button.innerHTML = originalContent;
+                        button.disabled = false;
+                    }
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                showToast('Failed to add item to cart', 'error');
+                if (button) {
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                }
+            }
+        }
+        
+        // Toggle wishlist item
+        async function toggleWishlist(productId, button = null) {
+            try {
+                const response = await fetch(`/add-to-wishlist/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update header counts
+                    updateHeaderCounts();
+                    
+                    // Update ALL heart icons for this product
+                    updateAllHeartIcons(productId, data.action === 'added');
+                    
+                    showToast(data.message || `Item ${data.action} wishlist!`, 'success');
+                } else {
+                    showToast('Error: ' + (data.error || 'Failed to update wishlist'), 'error');
+                }
+            } catch (error) {
+                console.error('Error toggling wishlist:', error);
+                showToast('Failed to update wishlist', 'error');
+            }
+        }
+        
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            // Remove existing toasts
+            document.querySelectorAll('.toast-notification').forEach(toast => toast.remove());
+            
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type} show`;
+            toast.innerHTML = `
+                <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // Setup event listeners for cart and wishlist buttons
+        function setupCartWishlistListeners() {
+            document.addEventListener('click', (e) => {
+                // Cart buttons
+                const cartBtn = e.target.closest('.add-to-cart-btn');
+                if (cartBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const productId = cartBtn.dataset.productId || 
+                                     cartBtn.closest('[data-product-id]')?.dataset.productId;
+                    const variantId = cartBtn.dataset.variantId;
+                    
+                    if (productId) {
+                        addToCart(productId, variantId, cartBtn);
+                    }
+                    return false;
+                }
+                
+                // Wishlist buttons
+                const wishlistBtn = e.target.closest('.wishlist-btn, .add-to-wishlist-btn');
+                if (wishlistBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    let productId = wishlistBtn.dataset.productId || 
+                                   wishlistBtn.dataset.product ||
+                                   wishlistBtn.closest('[data-product-id]')?.dataset.productId ||
+                                   wishlistBtn.closest('[data-product]')?.dataset.product;
+                    
+                    if (!productId && wishlistBtn.onclick) {
+                        const match = wishlistBtn.onclick.toString().match(/(\d+)/);
+                        if (match) productId = match[1];
+                    }
+                    
+                    if (productId) {
+                        toggleWishlist(productId, wishlistBtn);
+                    }
+                    return false;
+                }
+            });
+        }
+        
+        // ==================== PAGE INITIALIZATION ====================
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Update Pakistan Time
+            // Initialize Pakistan Time
             function updatePakistanTime() {
                 const options = { 
                     timeZone: 'Asia/Karachi',
@@ -385,11 +720,14 @@
                     hour12: true 
                 };
                 const timeString = new Date().toLocaleTimeString('en-PK', options);
-                document.getElementById('pakistan-time').textContent = `PKT ${timeString}`;
+                const timeElement = document.getElementById('pakistan-time');
+                if (timeElement) {
+                    timeElement.textContent = `PKT ${timeString}`;
+                }
             }
             updatePakistanTime();
             setInterval(updatePakistanTime, 1000);
-
+            
             // Mobile Search Toggle
             const toggleMobileSearch = document.getElementById('toggleMobileSearch');
             const mobileSearch = document.getElementById('mobileSearch');
@@ -405,20 +743,30 @@
                     mobileSearch.classList.remove('show');
                 });
             }
-
-            // Smooth scrolling for anchor links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        window.scrollTo({
-                            top: target.offsetTop - 100,
-                            behavior: 'smooth'
-                        });
-                    }
-                });
+            
+            // Initialize cart and wishlist functionality
+            setupCartWishlistListeners();
+            initializeWishlistState();
+            
+            // Update header counts on page load
+            setTimeout(updateHeaderCounts, 500);
+            
+            // Update when page becomes visible again
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    updateHeaderCounts();
+                }
             });
+            
+            // Periodically update counts (every 30 seconds)
+            setInterval(updateHeaderCounts, 30000);
+            
+            // Make functions available globally
+            window.addToCart = addToCart;
+            window.toggleWishlist = toggleWishlist;
+            window.updateHeaderCounts = updateHeaderCounts;
+            window.showToast = showToast;
+            window.updateAllHeartIcons = updateAllHeartIcons;
         });
     </script>
 </body>

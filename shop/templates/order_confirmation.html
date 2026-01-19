@@ -1,43 +1,634 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="alert alert-success">
-        <h4 class="alert-heading">Order Confirmed!</h4>
-        <p>Your order has been placed successfully. Here are your order details:</p>
-    </div>
+<style>
+    :root {
+        --primary-dark: #4936A2;
+        --primary-accent: #382d9c;
+        --secondary-dark: #606a7d;
+        --text-light: #f8f9fa;
+        --text-muted: #9ca3af;
+        --bg-light: #fcfdff;
+        --danger: #ef4444;
+        --text-color: #1f2937;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --border-radius: 12px;
+        --border-radius-sm: 8px;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-    <div class="card">
-        <div class="card-header">
-            <h5>Order #{{ order.id }}</h5>
+    .confirmation-page {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        min-height: calc(100vh - 76px);
+        padding: 3rem 0;
+    }
+
+    .confirmation-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        position: relative;
+    }
+
+    .confirmation-header h1 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        font-size: 2.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .confirmation-header p {
+        color: var(--secondary-dark);
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .success-icon {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 2rem;
+        background: linear-gradient(135deg, var(--success), #34d399);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    .success-icon::before {
+        content: '';
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(16, 185, 129, 0.1);
+        animation: ripple 2s infinite;
+    }
+
+    .success-icon i {
+        font-size: 3.5rem;
+        color: white;
+        position: relative;
+        z-index: 1;
+    }
+
+    .order-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        transition: var(--transition);
+    }
+
+    .order-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .order-card .card-header {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-accent));
+        color: white;
+        padding: 1.5rem;
+        border: none;
+    }
+
+    .order-card .card-header h3 {
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .order-card .card-header h3 i {
+        font-size: 1.5rem;
+    }
+
+    .order-card .card-body {
+        padding: 2rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .address-card, .details-card {
+        background: var(--bg-light);
+        border-radius: var(--border-radius-sm);
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+        height: 100%;
+    }
+
+    .address-card h5, .details-card h5 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid rgba(73, 54, 162, 0.1);
+    }
+
+    .address-card h5 i, .details-card h5 i {
+        font-size: 1.25rem;
+    }
+
+    .address-details p, .order-details p {
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+        font-size: 0.95rem;
+    }
+
+    .address-details p:last-child, .order-details p:last-child {
+        margin-bottom: 0;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1.25rem;
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        gap: 0.5rem;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-badge i {
+        font-size: 0.75rem;
+    }
+
+    .order-items-section {
+        margin-top: 2rem;
+    }
+
+    .order-items-section h5 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .items-list {
+        background: var(--bg-light);
+        border-radius: var(--border-radius-sm);
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .item-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .item-row:last-child {
+        border-bottom: none;
+    }
+
+    .item-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .item-image {
+        width: 60px;
+        height: 60px;
+        border-radius: var(--border-radius-sm);
+        overflow: hidden;
+        background: white;
+        border: 1px solid #e5e7eb;
+        flex-shrink: 0;
+    }
+
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .item-details h6 {
+        margin: 0 0 0.25rem 0;
+        color: var(--text-color);
+        font-weight: 600;
+    }
+
+    .item-details p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .item-quantity {
+        background: var(--primary-dark);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .item-price {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 1.1rem;
+    }
+
+    .total-section {
+        margin-top: 2rem;
+        background: linear-gradient(135deg, var(--bg-light), #f1f5f9);
+        border-radius: var(--border-radius-sm);
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+    }
+
+    .total-row:last-child {
+        border-top: 2px solid var(--primary-dark);
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-top: 0.5rem;
+        padding-top: 1rem;
+    }
+
+    .total-label {
+        color: var(--secondary-dark);
+        font-weight: 500;
+    }
+
+    .total-value {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 3rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary-dark {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-accent));
+        color: white;
+        border: none;
+        padding: 1rem 2.5rem;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        font-size: 1rem;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+    }
+
+    .btn-primary-dark:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        opacity: 0.95;
+        color: white;
+    }
+
+    .btn-outline-primary-dark {
+        background: white;
+        color: var(--primary-dark);
+        border: 2px solid var(--primary-dark);
+        padding: 1rem 2.5rem;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        font-size: 1rem;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+    }
+
+    .btn-outline-primary-dark:hover {
+        background: var(--primary-dark);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+    }
+
+    .order-number {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-sm);
+        font-family: monospace;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+    }
+
+    .order-summary {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .order-date {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.95rem;
+    }
+
+    .confirmation-message {
+        text-align: center;
+        max-width: 600px;
+        margin: 0 auto 2rem;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: var(--secondary-dark);
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes ripple {
+        0% { transform: scale(0.8); opacity: 1; }
+        100% { transform: scale(1.2); opacity: 0; }
+    }
+
+    @media (max-width: 768px) {
+        .confirmation-page {
+            padding: 2rem 0;
+        }
+        
+        .confirmation-header h1 {
+            font-size: 2rem;
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+        }
+        
+        .success-icon i {
+            font-size: 2.5rem;
+        }
+        
+        .order-card .card-body {
+            padding: 1.5rem;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn-primary-dark, .btn-outline-primary-dark {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .item-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .item-info {
+            width: 100%;
+        }
+        
+        .item-quantity {
+            align-self: flex-start;
+        }
+        
+        .order-summary {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .confirmation-header h1 {
+            font-size: 1.75rem;
+        }
+        
+        .order-card .card-header h3 {
+            font-size: 1.25rem;
+        }
+        
+        .address-card, .details-card, .items-list {
+            padding: 1rem;
+        }
+        
+        .total-section {
+            padding: 1rem;
+        }
+        
+        .total-row:last-child {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+
+<div class="confirmation-page">
+    <div class="container">
+        <!-- Success Header -->
+        <div class="confirmation-header">
+            <div class="success-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h1>Order Confirmed!</h1>
+            <p class="confirmation-message">
+                Thank you for your purchase! Your order has been successfully placed and is being processed. 
+                You will receive an email confirmation shortly with your order details.
+            </p>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>Shipping Address</h6>
-                    <address>
-                        {{ order.address.full_name }}<br>
-                        {{ order.address.street }}<br>
-                        {{ order.address.city }}, {{ order.address.state }}<br>
-                        {{ order.address.postal_code }}<br>
-                        {{ order.address.country }}<br>
-                        Phone: {{ order.address.phone }}
-                    </address>
+
+        <!-- Order Card -->
+        <div class="order-card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <h3><i class="bi bi-receipt"></i> Order Summary</h3>
+                    <div class="order-summary">
+                        <span class="order-number">#{{ order.id }}</span>
+                        <span class="order-date">{{ order.created_at|date:"F d, Y" }}</span>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <h6>Order Details</h6>
-                    <p>Status: {{ order.get_status_display }}</p>
-                    <p>Order Date: {{ order.created_at|date }}</p>
-                    <p class="h4">Total: Rs.{{ order.total }}</p>
+            </div>
+            <div class="card-body">
+                <!-- Address and Details Grid -->
+                <div class="info-grid">
+                    <div class="address-card">
+                        <h5><i class="bi bi-geo-alt"></i> Shipping Address</h5>
+                        <div class="address-details">
+                            <p><strong>{{ order.delivery_address.full_name }}</strong></p>
+                            <p>{{ order.delivery_address.street }}</p>
+                            <p>{{ order.delivery_address.city }}, {{ order.delivery_address.state }}</p>
+                            <p>{{ order.delivery_address.postal_code }}</p>
+                            <p>{{ order.delivery_address.country }}</p>
+                            <p class="mt-2"><i class="bi bi-telephone me-2"></i>{{ order.delivery_address.phone }}</p>
+                            {% if order.delivery_address.email %}
+                            <p><i class="bi bi-envelope me-2"></i>{{ order.delivery_address.email }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="details-card">
+                        <h5><i class="bi bi-info-circle"></i> Order Details</h5>
+                        <div class="order-details">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="status-badge">
+                                    <i class="bi bi-check-circle"></i>
+                                    {{ order.get_status_display }}
+                                </span>
+                            </div>
+                            <p><i class="bi bi-calendar me-2"></i> <strong>Order Date:</strong> {{ order.created_at|date:"F d, Y h:i A" }}</p>
+                            <p><i class="bi bi-clock me-2"></i> <strong>Estimated Delivery:</strong> 3-7 Business Days</p>
+                            <p><i class="bi bi-truck me-2"></i> <strong>Shipping Method:</strong> Standard Delivery</p>
+                            <p><i class="bi bi-credit-card me-2"></i> <strong>Payment:</strong> Cash on Delivery</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ordered Items -->
+                <div class="order-items-section">
+                    <h5>Ordered Items</h5>
+                    <div class="items-list">
+                        {% for item in order.items.all %}
+                        <div class="item-row">
+                            <div class="item-info">
+                                <div class="item-image">
+                                    {% if item.product.images.first %}
+                                    <img src="{{ item.product.images.first.image.url }}" 
+                                         alt="{{ item.product.name }}"
+                                         onerror="this.src='https://via.placeholder.com/60x60/e5e7eb/6b7280?text=No+Image'">
+                                    {% else %}
+                                    <img src="https://via.placeholder.com/60x60/e5e7eb/6b7280?text=No+Image" 
+                                         alt="No image">
+                                    {% endif %}
+                                </div>
+                                <div class="item-details">
+                                    <h6>{{ item.product.name }}</h6>
+                                    {% if item.variant %}
+                                    <p>
+                                        {% if item.variant.wattage %}{{ item.variant.wattage }}W{% endif %}
+                                        {% if item.variant.color %}{{ item.variant.color }}{% endif %}
+                                        {% if item.variant.shape %}{{ item.variant.shape }}{% endif %}
+                                        {% if item.variant.size %}{{ item.variant.size }}{% endif %}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="item-quantity">{{ item.quantity }}</span>
+                                <span class="item-price">Rs. {{ item.get_subtotal|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Order Total -->
+                <div class="total-section">
+                    <div class="total-row">
+                        <span class="total-label">Subtotal</span>
+                        <span class="total-value">Rs. {{ order.get_subtotal|floatformat:2 }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Shipping Fee</span>
+                        <span class="total-value">Rs. {{ order.shipping_fee|default:"0.00"|floatformat:2 }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Tax</span>
+                        <span class="total-value">Rs. {{ order.tax|default:"0.00"|floatformat:2 }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Grand Total</span>
+                        <span class="total-value">Rs. {{ order.total|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{% url 'home' %}" class="btn-primary-dark">
+                <i class="bi bi-house-door"></i>
+                Continue Shopping
+            </a>
+            {% if request.user.is_authenticated %}
+            <a href="{% url 'profile' %}" class="btn-outline-primary-dark">
+                <i class="bi bi-person-circle"></i>
+                View My Orders
+            </a>
+            {% endif %}
+            <a href="{% url 'order_detail' order.id %}" class="btn-outline-primary-dark">
+                <i class="bi bi-printer"></i>
+                Print Receipt
+            </a>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="mt-5 text-center">
+            <div class="alert alert-info" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2);">
+                <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+                    <i class="bi bi-info-circle-fill fs-4" style="color: var(--info);"></i>
+                    <div>
+                        <p class="mb-0">
+                            <strong>Need help with your order?</strong> 
+                            Contact our customer support at 
+                            <a href="tel:+923001234567" class="text-decoration-none" style="color: var(--primary-dark);">+92 371 0048010</a>
+                            or email 
+                            <a href="mailto:brandvillage1@gmail.com" class="text-decoration-none" style="color: var(--primary-dark);">brandvillage1@gmail.com</a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="mt-3">
-        <a href="{% url 'home' %}" class="btn btn-primary">
-            Continue Shopping
-        </a>
-    </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Print receipt functionality
+        document.querySelector('[href*="order_detail"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.print();
+        });
+    });
+</script>
+
 {% endblock %}

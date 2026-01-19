@@ -1,102 +1,1169 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Checkout</h2>
-    <div class="row">
-        <!-- Left Side: Address Form -->
-        <div class="col-md-7">
-            <form method="post">
-                {% csrf_token %}
-
-                <!-- Full Name -->
-                <div class="form-group">
-                    <label for="id_full_name">Full Name</label>
-                    <input type="text" name="full_name" id="id_full_name" class="form-control"
-                        placeholder="Enter your full name" value="{{ default_address.full_name|default:'' }}" required>
-                </div>
-
-                <!-- Phone Number -->
-                <div class="form-group">
-                    <label for="id_phone">Phone Number</label>
-                    <input type="text" name="phone" id="id_phone" class="form-control"
-                        placeholder="Enter your phone number" value="{{ default_address.phone|default:'' }}" required>
-                </div>
-
-                <!-- Email -->
-                <div class="form-group">
-                    <label for="id_email">Email</label>
-                    <input type="email" name="email" id="id_email" class="form-control"
-                        placeholder="Enter your email" value="{{ default_address.email|default:'' }}" required>
-                </div>
-
-                <!-- Street Address -->
-                <div class="form-group">
-                    <label for="id_street">Street Address</label>
-                    <input type="text" name="street" id="id_street" class="form-control"
-                        placeholder="Enter your street address" value="{{ default_address.street|default:'' }}" required>
-                </div>
-
-                <!-- City -->
-                <div class="form-group">
-                    <label for="id_city">City</label>
-                    <input type="text" name="city" id="id_city" class="form-control"
-                        placeholder="Enter your city" value="{{ default_address.city|default:'' }}" required>
-                </div>
-
-                <!-- State -->
-                <div class="form-group">
-                    <label for="id_state">State</label>
-                    <input type="text" name="state" id="id_state" class="form-control"
-                        placeholder="Enter your state" value="{{ default_address.state|default:'' }}" required>
-                </div>
-
-                <!-- Postal Code -->
-                <div class="form-group">
-                    <label for="id_postal_code">Postal Code</label>
-                    <input type="text" name="postal_code" id="id_postal_code" class="form-control"
-                        placeholder="Enter your postal code" value="{{ default_address.postal_code|default:'' }}" required>
-                </div>
-
-                <!-- Country -->
-                <div class="form-group">
-                    <label for="id_country">Country</label>
-                    <input type="text" name="country" id="id_country" class="form-control"
-                        placeholder="Enter your country" value="{{ default_address.country|default:'' }}" required>
-                </div>
-
-                <!-- Payment Method (Only Cash on Delivery) -->
-                <div class="form-group">
-                    <label>Payment Method</label>
-                    <input type="text" class="form-control" value="Cash on Delivery" readonly>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary btn-block mt-3">Place Order</button>
-            </form>
-        </div>
-
-        <!-- Right Side: Order Summary -->
-        <div class="col-md-5">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Order Summary</h4>
-                </div>
-                <div class="card-body">
-                    <ul class="list-group mb-3">
-                        {% for item in cart_items %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>{{ item.product.name }}</strong>
-                                <small class="text-muted d-block">Qty: {{ item.quantity }}</small>
+<div class="container-fluid checkout-page">
+    <!-- Progress Steps -->
+    <div class="progress-steps py-4">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="d-flex justify-content-between align-items-center position-relative">
+                        <!-- Progress Line -->
+                        <div class="progress-line"></div>
+                        
+                        <!-- Steps -->
+                        <div class="step completed">
+                            <div class="step-icon">
+                                <i class="bi bi-cart-check"></i>
                             </div>
-                            <span class="text-muted">PKR {{ item.subtotal }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    <h5 class="text-right"><strong>Total: PKR {{ total }}</strong></h5>
+                            <div class="step-label">Cart</div>
+                        </div>
+                        
+                        <div class="step active">
+                            <div class="step-icon">
+                                <i class="bi bi-truck"></i>
+                            </div>
+                            <div class="step-label">Shipping</div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-icon">
+                                <i class="bi bi-credit-card"></i>
+                            </div>
+                            <div class="step-label">Payment</div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-icon">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div class="step-label">Confirm</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <div class="row g-4">
+            <!-- Shipping Address Form -->
+            <div class="col-lg-8">
+                <div class="checkout-card card border-0 shadow-sm">
+                    <div class="card-header bg-primary-dark text-white border-0">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-geo-alt me-3 fs-4"></i>
+                            <div>
+                                <h4 class="mb-0">Shipping Address</h4>
+                                <small class="opacity-75">Enter your delivery details</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-4 p-md-5">
+                        {% if messages %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {% for message in messages %}
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <div>{{ message }}</div>
+                            </div>
+                            {% endfor %}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endif %}
+                        
+                        <form method="post" id="checkout-form" class="checkout-form">
+                            {% csrf_token %}
+                            
+                            <!-- Contact Information -->
+                            <div class="section-header mb-4">
+                                <h5 class="text-primary-dark mb-3">
+                                    <i class="bi bi-person me-2"></i>Contact Information
+                                </h5>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="full_name" name="full_name" 
+                                               placeholder="Full Name" 
+                                               value="{% if default_address %}{{ default_address.full_name }}{% endif %}" 
+                                               required>
+                                        <label for="full_name">Full Name *</label>
+                                        <div class="invalid-feedback">Please enter your full name</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="email" name="email"
+                                               placeholder="Email Address"
+                                               value="{% if default_address %}{{ default_address.email }}{% endif %}" 
+                                               required>
+                                        <label for="email">Email Address *</label>
+                                        <div class="invalid-feedback">Please enter a valid email address</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+    <div class="form-floating">
+        <input type="tel" class="form-control" id="id_phone" name="phone"
+               placeholder="Phone Number"
+               value="{% if default_address %}{{ default_address.phone }}{% endif %}" 
+               required>
+        <label for="phone">Phone Number *</label>
+        <div class="invalid-feedback">Please enter your phone number</div>
+    </div>
+</div>
+                            </div>
+                            
+                            <!-- Shipping Address -->
+                            <div class="section-header mt-5 mb-4">
+                                <h5 class="text-primary-dark mb-3">
+                                    <i class="bi bi-house-door me-2"></i>Shipping Address
+                                </h5>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="street" name="street"
+                                               placeholder="Street Address"
+                                               value="{% if default_address %}{{ default_address.street }}{% endif %}" 
+                                               required>
+                                        <label for="street">Street Address *</label>
+                                        <div class="invalid-feedback">Please enter your street address</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="city" name="city"
+                                               placeholder="City"
+                                               value="{% if default_address %}{{ default_address.city }}{% endif %}" 
+                                               required>
+                                        <label for="city">City *</label>
+                                        <div class="invalid-feedback">Please enter your city</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="state" name="state"
+                                               placeholder="State/Province"
+                                               value="{% if default_address %}{{ default_address.state }}{% endif %}" 
+                                               required>
+                                        <label for="state">State/Province *</label>
+                                        <div class="invalid-feedback">Please enter your state/province</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="postal_code" name="postal_code"
+                                               placeholder="Postal Code"
+                                               value="{% if default_address %}{{ default_address.postal_code }}{% endif %}" 
+                                               required>
+                                        <label for="postal_code">Postal Code *</label>
+                                        <div class="invalid-feedback">Please enter your postal code</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="country" name="country" required>
+                                            <option value="">Select Country</option>
+                                            <option value="Pakistan" {% if default_address.country == 'Pakistan' %}selected{% endif %}>Pakistan</option>
+                                            
+                                            <!-- Add more countries as needed -->
+                                        </select>
+                                        <label for="country">Country *</label>
+                                        <div class="invalid-feedback">Please select your country</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            
+                            <!-- Save Address Option -->
+                            {% if user.is_authenticated %}
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="save_address" name="save_address" checked>
+                                <label class="form-check-label" for="save_address">
+                                    <i class="bi bi-bookmark-check me-2"></i>Save this address for future orders
+                                </label>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Place Order Button -->
+                            <div class="mt-5 pt-3 border-top">
+                                <button type="submit" class="btn btn-checkout w-100 py-3" id="place-order-btn">
+                                    <span class="btn-content">
+                                        <i class="bi bi-lock-fill me-2"></i>
+                                        <span class="btn-text">Place Order & Continue to Payment</span>
+                                        <span class="btn-price">Rs {{ total|floatformat:2 }}</span>
+                                    </span>
+                                </button>
+                                
+                                <div class="text-center mt-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-shield-check me-1"></i>
+                                        Your payment information is secure and encrypted
+                                    </small>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <div class="sticky-top" style="top: 20px;">
+                    <!-- Order Summary Card -->
+                    <div class="checkout-card card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-primary-dark text-white border-0">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-receipt me-3 fs-4"></i>
+                                <div>
+                                    <h4 class="mb-0">Order Summary</h4>
+                                    <small class="opacity-75">{{ cart_items|length }} item(s) in cart</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <!-- Items List -->
+                            <div class="order-items mb-4">
+                                {% for item in cart_items %}
+                                <div class="order-item d-flex align-items-start mb-3 pb-3 border-bottom">
+                                    <div class="item-image me-3">
+                                        
+                                        <img src="{{ item.product.images.first.image.url }}" 
+                                             alt="{{ item.product.name }}"
+                                             class="rounded">
+                                        
+                                        <span class="item-quantity">{{ item.quantity }}</span>
+                                    </div>
+                                    <div class="item-details flex-grow-1">
+                                        <h6 class="item-title mb-1">{{ item.product.name }}</h6>
+                                        {% if item.variant %}
+                                        <div class="item-variant small text-muted">
+                                            {% if item.variant.wattage %}<span class="me-2">{{ item.variant.wattage }}</span>{% endif %}
+                                            {% if item.variant.color %}<span class="me-2">{{ item.variant.color }}</span>{% endif %}
+                                            {% if item.variant.shape %}<span class="me-2">{{ item.variant.shape }}</span>{% endif %}
+                                            {% if item.variant.size %}<span>{{ item.variant.size }}</span>{% endif %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="item-price text-end">
+                                        <div class="h6 mb-0 text-primary-dark">Rs {{ item.get_subtotal|floatformat:2 }}</div>
+                                        <small class="text-muted">{{ item.quantity }} × Rs {{ item.product.discount_price|default:item.product.price|floatformat:2 }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- Order Totals -->
+                            <div class="order-totals">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Subtotal</span>
+                                    <span>Rs {{ total|floatformat:2 }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Shipping</span>
+                                    <span class="text-success">Free</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Tax</span>
+                                    <span>Calculated at checkout</span>
+                                </div>
+                                
+                                <hr class="my-3">
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h5 class="mb-0">Total</h5>
+                                        <small class="text-muted">Including VAT</small>
+                                    </div>
+                                    <h3 class="text-primary-dark mb-0">Rs {{ total|floatformat:2 }}</h3>
+                                </div>
+                                
+                                <div class="alert alert-success border-0">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-truck fs-5 me-3"></i>
+                                        <div>
+                                            <small class="d-block">Free Shipping</small>
+                                            <small class="text-muted">Estimated delivery: 3-5 business days</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-light border">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-arrow-return-left fs-5 me-3"></i>
+                                        <div>
+                                            <small class="d-block">Easy Returns</small>
+                                            <small class="text-muted">7-day return policy</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Back to Cart -->
+                    <a href="{% url 'cart' %}" class="btn btn-outline-primary-dark w-100 py-2">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Cart
+                    </a>
+                    
+                    <!-- Need Help -->
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-question-circle me-1"></i>
+                            Need help? <a href="#" class="text-primary-accent">Contact Support</a>
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    :root {
+        --primary-dark: #4936A2;
+        --primary-accent: #382d9c;
+        --secondary-dark: #606a7d;
+        --text-light: #f8f9fa;
+        --text-muted: #9ca3af;
+        --bg-light: #fcfdff;
+        --danger: #ef4444;
+        --text-color: #1f2937;
+        --border-radius: 12px;
+        --border-radius-sm: 8px;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .checkout-page {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        min-height: 100vh;
+    }
+
+    /* Progress Steps */
+    .progress-steps {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .progress-steps .step {
+        position: relative;
+        text-align: center;
+        z-index: 2;
+        flex: 1;
+        max-width: 200px;
+    }
+
+    .step-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: var(--secondary-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin: 0 auto 10px;
+        transition: var(--transition);
+        border: 3px solid transparent;
+    }
+
+    .step.active .step-icon {
+        background: var(--primary-dark);
+        color: white;
+        border-color: white;
+        box-shadow: 0 0 0 4px rgba(73, 54, 162, 0.2);
+    }
+
+    .step.completed .step-icon {
+        background: var(--primary-accent);
+        color: white;
+    }
+
+    .step-label {
+        font-weight: 600;
+        color: var(--secondary-dark);
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .step.active .step-label {
+        color: var(--primary-dark);
+    }
+
+    .step.completed .step-label {
+        color: var(--primary-accent);
+    }
+
+    .progress-line {
+        position: absolute;
+        top: 25px;
+        left: 10%;
+        right: 10%;
+        height: 3px;
+        background: #e5e7eb;
+        z-index: 1;
+    }
+
+    .progress-line::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 50%;
+        background: var(--primary-dark);
+        border-radius: 3px;
+    }
+
+    /* Checkout Card */
+    .checkout-card {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        background: white;
+        border: 1px solid #e5e7eb;
+    }
+
+    .checkout-card .card-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .checkout-card .card-body {
+        padding: 2rem;
+    }
+
+    /* Form Styles */
+    .checkout-form .form-floating {
+        margin-bottom: 1.5rem;
+    }
+
+    .checkout-form .form-control,
+    .checkout-form .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: var(--border-radius-sm);
+        padding: -1rem 0.75rem;
+        font-size: 0.95rem;
+        transition: var(--transition);
+        background: #f8fafc;
+    }
+
+    .checkout-form .form-control:focus,
+    .checkout-form .form-select:focus {
+        border-color: var(--primary-dark);
+        box-shadow: 0 0 0 3px rgba(73, 54, 162, 0.1);
+        background: white;
+    }
+
+    .checkout-form .form-floating > label {
+        padding: 1rem 0.75rem;
+        color: var(--secondary-dark);
+    }
+
+    .checkout-form .form-control:focus ~ label,
+    .checkout-form .form-control:not(:placeholder-shown) ~ label {
+        color: var(--primary-dark);
+        transform: scale(0.85) translateY(-1.2rem) translateX(0.15rem);
+        padding: -1 0.2rem;
+    }
+
+    .section-header {
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f1f5f9;
+    }
+
+    /* Checkout Button */
+    .btn-checkout {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-accent) 100%);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-checkout:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        color: white;
+    }
+
+    .btn-checkout:active {
+        transform: translateY(0);
+    }
+
+    .btn-checkout .btn-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .btn-checkout .btn-price {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin-left: auto;
+    }
+
+    .btn-checkout:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Order Items */
+    .order-item {
+        transition: var(--transition);
+    }
+
+    .order-item:hover {
+        background: #f8fafc;
+        margin: 0 -1rem;
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius-sm);
+    }
+
+    .item-image {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        flex-shrink: 0;
+    }
+
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: var(--border-radius-sm);
+    }
+
+    .item-quantity {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        background: var(--primary-dark);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .item-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-color);
+        line-height: 1.4;
+    }
+
+    .item-variant {
+        font-size: 0.8rem;
+    }
+
+    .item-price {
+        min-width: 80px;
+    }
+
+    /* Order Totals */
+    .order-totals .alert {
+        border-radius: var(--border-radius-sm);
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        border: none;
+    }
+
+    .order-totals .alert-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+    }
+
+    .order-totals .alert-light {
+        background: #f8fafc;
+        color: var(--secondary-dark);
+    }
+
+    /* Back Button */
+    .btn-outline-primary-dark {
+        color: var(--primary-dark);
+        border: 2px solid var(--primary-dark);
+        border-radius: var(--border-radius-sm);
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .btn-outline-primary-dark:hover {
+        background: var(--primary-dark);
+        color: white;
+        border-color: var(--primary-dark);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .checkout-card .card-body {
+            padding: 1.5rem;
+        }
+        
+        .progress-steps .step {
+            max-width: 120px;
+        }
+        
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        
+        .progress-line {
+            top: 20px;
+        }
+        
+        .btn-checkout .btn-content {
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .btn-checkout .btn-price {
+            margin-left: 0;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .progress-steps {
+            padding: 1rem 0;
+        }
+        
+        .progress-steps .step {
+            max-width: 80px;
+        }
+        
+        .step-label {
+            font-size: 0.75rem;
+        }
+        
+        .checkout-form .row.g-3 > [class*="col-"] {
+            padding-right: calc(var(--bs-gutter-x) * .5);
+            padding-left: calc(var(--bs-gutter-x) * .5);
+        }
+    }
+
+    /* Animation for loading state */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .loading {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const addressForm = document.getElementById('address-form');
+        const saveBtn = document.getElementById('save-address-btn');
+        const isDefaultCheckbox = document.getElementById('id_is_default');
+        const phoneInput = document.getElementById('id_phone');
+        const countrySelect = document.getElementById('id_country');
+        
+        // Country-specific phone number formats
+        const countryPhoneFormats = {
+            'Pakistan': {
+        pattern: /^03\d{2}-\d{3}-\d{4}$/,
+        cleanPattern: /^0[1-9]\d{9}$/, // 11 digits including leading 0
+        format: function(value) {
+            let clean = value.replace(/\D/g, '');
+            // Allow 11 digits for Pakistan
+            if (clean.length > 11) {
+                clean = clean.slice(0, 11);
+            }
+            // Format: 03XX-XXX-XXXX (Pakistan mobile format - 11 digits total)
+            if (clean.length > 7) {
+                return clean.slice(0, 4) + '-' + clean.slice(4, 7) + '-' + clean.slice(7);
+            } else if (clean.length > 4) {
+                return clean.slice(0, 4) + '-' + clean.slice(4);
+            }
+            return clean;
+        },
+        validationMessage: 'Please enter a valid 11-digit Pakistani phone number (e.g., 03XX-XXX-XXXX)'
+    },
+
+            // 'India': {
+            //     pattern: /^[6-9]\d{2}-\d{3}-\d{4}$/,
+            //     cleanPattern: /^[6-9]\d{9}$/,
+            //     format: function(value) {
+            //         let clean = value.replace(/\D/g, '');
+            //         if (clean.length > 10) {
+            //             clean = clean.slice(0, 10);
+            //         }
+            //         // Format: XXX-XXX-XXXX (India mobile format)
+            //         if (clean.length > 6) {
+            //             return clean.slice(0, 3) + '-' + clean.slice(3, 6) + '-' + clean.slice(6);
+            //         } else if (clean.length > 3) {
+            //             return clean.slice(0, 3) + '-' + clean.slice(3);
+            //         }
+            //         return clean;
+            //     },
+            //     validationMessage: 'Please enter a valid 10-digit Indian phone number (e.g., XXX-XXX-XXXX)'
+            // },
+            // 'United States': {
+            //     pattern: /^\(\d{3}\) \d{3}-\d{4}$/,
+            //     cleanPattern: /^\d{10}$/,
+            //     format: function(value) {
+            //         let clean = value.replace(/\D/g, '');
+            //         if (clean.length > 10) {
+            //             clean = clean.slice(0, 10);
+            //         }
+            //         // Format: (XXX) XXX-XXXX
+            //         if (clean.length > 6) {
+            //             return '(' + clean.slice(0, 3) + ') ' + clean.slice(3, 6) + '-' + clean.slice(6);
+            //         } else if (clean.length > 3) {
+            //             return '(' + clean.slice(0, 3) + ') ' + clean.slice(3);
+            //         } else if (clean.length > 0) {
+            //             return '(' + clean;
+            //         }
+            //         return clean;
+            //     },
+            //     validationMessage: 'Please enter a valid 10-digit US phone number (e.g., (XXX) XXX-XXXX)'
+            // },
+            // 'United Kingdom': {
+            //     pattern: /^0\d{3} \d{3} \d{4}$/,
+            //     cleanPattern: /^0\d{9,10}$/,
+            //     format: function(value) {
+            //         let clean = value.replace(/\D/g, '');
+            //         if (clean.length > 11) {
+            //             clean = clean.slice(0, 11);
+            //         }
+            //         // Format: 0XXX XXX XXXX
+            //         if (clean.length > 7) {
+            //             return clean.slice(0, 4) + ' ' + clean.slice(4, 7) + ' ' + clean.slice(7);
+            //         } else if (clean.length > 4) {
+            //             return clean.slice(0, 4) + ' ' + clean.slice(4);
+            //         }
+            //         return clean;
+            //     },
+            //     validationMessage: 'Please enter a valid UK phone number (e.g., 0XXX XXX XXXX)'
+            // },
+            // 'Canada': {
+            //     pattern: /^\(\d{3}\) \d{3}-\d{4}$/,
+            //     cleanPattern: /^\d{10}$/,
+            //     format: function(value) {
+            //         let clean = value.replace(/\D/g, '');
+            //         if (clean.length > 10) {
+            //             clean = clean.slice(0, 10);
+            //         }
+            //         // Format: (XXX) XXX-XXXX (same as US)
+            //         if (clean.length > 6) {
+            //             return '(' + clean.slice(0, 3) + ') ' + clean.slice(3, 6) + '-' + clean.slice(6);
+            //         } else if (clean.length > 3) {
+            //             return '(' + clean.slice(0, 3) + ') ' + clean.slice(3);
+            //         } else if (clean.length > 0) {
+            //             return '(' + clean;
+            //         }
+            //         return clean;
+            //     },
+            //     validationMessage: 'Please enter a valid 10-digit Canadian phone number (e.g., (XXX) XXX-XXXX)'
+            // },
+            // 'Australia': {
+            //     pattern: /^0\d{1} \d{4} \d{4}$/,
+            //     cleanPattern: /^0\d{8,9}$/,
+            //     format: function(value) {
+            //         let clean = value.replace(/\D/g, '');
+            //         if (clean.length > 10) {
+            //             clean = clean.slice(0, 10);
+            //         }
+            //         // Format: 0X XXXX XXXX
+            //         if (clean.length > 5) {
+            //             return clean.slice(0, 2) + ' ' + clean.slice(2, 6) + ' ' + clean.slice(6);
+            //         } else if (clean.length > 2) {
+            //             return clean.slice(0, 2) + ' ' + clean.slice(2);
+            //         }
+            //         return clean;
+            //     },
+            //     validationMessage: 'Please enter a valid Australian phone number (e.g., 0X XXXX XXXX)'
+            // }
+        
+        };
+
+        // Country-specific postal code patterns
+        const countryPostalCodePatterns = {
+            'Pakistan': /^[0-9]{5}$/,
+            // 'India': /^[1-9][0-9]{5}$/,
+            // 'United States': /^\d{5}(-\d{4})?$/,
+            // 'United Kingdom': /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i,
+            // 'Canada': /^[A-Z]\d[A-Z] \d[A-Z]\d$/,
+            // 'Australia': /^\d{4}$/
+        };
+
+        // Country-specific postal code messages
+        const countryPostalCodeMessages = {
+            'Pakistan': 'Please enter a valid 5-digit Pakistan postal code',
+            // 'India': 'Please enter a valid 6-digit Indian PIN code',
+            // 'United States': 'Please enter a valid 5 or 9-digit US ZIP code (e.g., 12345 or 12345-6789)',
+            // 'United Kingdom': 'Please enter a valid UK postcode (e.g., SW1A 1AA)',
+            // 'Canada': 'Please enter a valid Canadian postal code (e.g., A1A 1A1)',
+            // 'Australia': 'Please enter a valid 4-digit Australian postcode'
+        };
+
+        // Helper functions
+        function getCurrentCountry() {
+            return countrySelect ? countrySelect.value : 'Pakistan';
+        }
+
+        function formatPhoneForCountry(value, country) {
+            const format = countryPhoneFormats[country];
+            if (format && format.format) {
+                return format.format(value);
+            }
+            // Default formatting (no formatting)
+            return value.replace(/\D/g, '');
+        }
+
+        function validatePhoneForCountry(value, country) {
+            const format = countryPhoneFormats[country];
+            const cleanValue = value.replace(/\D/g, '');
+            
+            if (!format) return true; // No validation for unknown countries
+            
+            // Check against pattern
+            if (format.pattern && !format.pattern.test(value)) {
+                return false;
+            }
+            
+            // Check against clean pattern
+            if (format.cleanPattern && !format.cleanPattern.test(cleanValue)) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        function getPhoneValidationMessage(country) {
+            const format = countryPhoneFormats[country];
+            return format ? format.validationMessage : 'Please enter a valid phone number';
+        }
+
+        function validatePostalCodeForCountry(value, country) {
+            const pattern = countryPostalCodePatterns[country];
+            if (!pattern) return true; // No validation for unknown countries
+            
+            return pattern.test(value);
+        }
+
+        function getPostalCodeValidationMessage(country) {
+            return countryPostalCodeMessages[country] || 'Please enter a valid postal code';
+        }
+
+        function showValidationMessage(field, message) {
+            let feedback = field.nextElementSibling?.nextElementSibling;
+            if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                feedback = field.parentElement.querySelector('.invalid-feedback');
+                if (!feedback) {
+                    feedback = document.createElement('div');
+                    feedback.className = 'invalid-feedback';
+                    field.parentElement.appendChild(feedback);
+                }
+            }
+            feedback.textContent = message;
+            feedback.style.display = 'block';
+        }
+
+        function hideValidationMessage(field) {
+            const feedback = field.parentElement.querySelector('.invalid-feedback');
+            if (feedback) {
+                feedback.style.display = 'none';
+            }
+        }
+
+        function showToast(message, type = 'error') {
+            // Remove existing toasts
+            document.querySelectorAll('.address-toast').forEach(toast => toast.remove());
+            
+            const toast = document.createElement('div');
+            toast.className = `address-toast alert alert-${type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'success'} alert-dismissible fade show position-fixed`;
+            toast.style.cssText = `
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: var(--shadow-lg);
+                border-radius: var(--border-radius-sm);
+            `;
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi ${type === 'error' ? 'bi-exclamation-triangle-fill' : type === 'warning' ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'} me-2 fs-5"></i>
+                    <div class="flex-grow-1">${message}</div>
+                    <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Check if address limit is reached (for new addresses)
+        {'% if addresses.count >= 3 and not address %'}
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.classList.add('disabled');
+            saveBtn.title = 'Maximum address limit reached. Edit or delete an existing address.';
+        }
+        {'% endif %'}
+        
+        // Handle default address checkbox logic
+        if (isDefaultCheckbox) {
+            // If it's a default address being edited, disable unchecking
+            if (isDefaultCheckbox.hasAttribute('onclick')) {
+                isDefaultCheckbox.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showToast('This is your default address. To change it, set another address as default first.', 'info');
+                });
+            }
+            
+            // Show warning when unchecking default for non-default addresses
+            isDefaultCheckbox.addEventListener('change', function() {
+                if (!this.checked && this.hasAttribute('data-was-default')) {
+                    showToast('Unchecking this will remove default status from this address.', 'warning');
+                }
+            });
+        }
+
+        // Phone number formatting and validation
+        if (phoneInput) {
+            // Format phone number as user types
+            phoneInput.addEventListener('input', function(e) {
+                const country = getCurrentCountry();
+                const cursorPosition = this.selectionStart;
+                const formatted = formatPhoneForCountry(this.value, country);
+                const oldValue = this.value;
+                
+                this.value = formatted;
+                
+                // Restore cursor position (adjust for added formatting characters)
+                let newCursorPosition = cursorPosition;
+                if (oldValue.length < formatted.length) {
+                    // Formatting characters were added
+                    const addedChars = (formatted.match(/[^\d]/g) || []).length - (oldValue.match(/[^\d]/g) || []).length;
+                    newCursorPosition += addedChars;
+                } else if (oldValue.length > formatted.length) {
+                    // Formatting characters were removed
+                    const removedChars = (oldValue.match(/[^\d]/g) || []).length - (formatted.match(/[^\d]/g) || []).length;
+                    newCursorPosition -= removedChars;
+                }
+                
+                this.setSelectionRange(newCursorPosition, newCursorPosition);
+            });
+
+            // Validate on blur
+            phoneInput.addEventListener('blur', function() {
+                const country = getCurrentCountry();
+                const isValid = validatePhoneForCountry(this.value, country);
+                
+                if (!isValid && this.value.trim()) {
+                    this.classList.add('is-invalid');
+                    showValidationMessage(this, getPhoneValidationMessage(country));
+                } else {
+                    this.classList.remove('is-invalid');
+                    hideValidationMessage(this);
+                }
+            });
+
+            // Update phone formatting when country changes
+            if (countrySelect) {
+                countrySelect.addEventListener('change', function() {
+                    const country = this.value;
+                    const formatted = formatPhoneForCountry(phoneInput.value, country);
+                    phoneInput.value = formatted;
+                    
+                    // Re-validate after country change
+                    const isValid = validatePhoneForCountry(formatted, country);
+                    if (!isValid && formatted.trim()) {
+                        phoneInput.classList.add('is-invalid');
+                        showValidationMessage(phoneInput, getPhoneValidationMessage(country));
+                    } else {
+                        phoneInput.classList.remove('is-invalid');
+                        hideValidationMessage(phoneInput);
+                    }
+                });
+            }
+        }
+
+        // Postal code validation
+        const postalCodeInput = document.getElementById('id_postal_code');
+        if (postalCodeInput) {
+            postalCodeInput.addEventListener('blur', function() {
+                const country = getCurrentCountry();
+                const value = this.value.trim();
+                
+                if (value) {
+                    const isValid = validatePostalCodeForCountry(value, country);
+                    if (!isValid) {
+                        this.classList.add('is-invalid');
+                        showValidationMessage(this, getPostalCodeValidationMessage(country));
+                    } else {
+                        this.classList.remove('is-invalid');
+                        hideValidationMessage(this);
+                    }
+                }
+            });
+
+            // Update postal code validation when country changes
+            if (countrySelect) {
+                countrySelect.addEventListener('change', function() {
+                    const country = this.value;
+                    const value = postalCodeInput.value.trim();
+                    
+                    if (value) {
+                        const isValid = validatePostalCodeForCountry(value, country);
+                        if (!isValid) {
+                            postalCodeInput.classList.add('is-invalid');
+                            showValidationMessage(postalCodeInput, getPostalCodeValidationMessage(country));
+                        } else {
+                            postalCodeInput.classList.remove('is-invalid');
+                            hideValidationMessage(postalCodeInput);
+                        }
+                    }
+                });
+            }
+        }
+
+        // Real-time form validation
+        const validateForm = () => {
+            let isValid = true;
+            const requiredFields = addressForm.querySelectorAll('[required]');
+            
+            requiredFields.forEach(field => {
+                const isSelect = field.tagName === 'SELECT';
+                const isEmpty = isSelect ? field.value === '' : !field.value.trim();
+                
+                if (isEmpty) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                    showValidationMessage(field, 'This field is required');
+                } else {
+                    field.classList.remove('is-invalid');
+                    hideValidationMessage(field);
+                    
+                    // Additional validations
+                    if (field.id === 'id_phone') {
+                        const country = getCurrentCountry();
+                        const isValidPhone = validatePhoneForCountry(field.value, country);
+                        if (!isValidPhone) {
+                            isValid = false;
+                            field.classList.add('is-invalid');
+                            showValidationMessage(field, getPhoneValidationMessage(country));
+                        }
+                    }
+                    
+                    if (field.id === 'id_postal_code') {
+                        const country = getCurrentCountry();
+                        const isValidPostalCode = validatePostalCodeForCountry(field.value, country);
+                        if (!isValidPostalCode) {
+                            isValid = false;
+                            field.classList.add('is-invalid');
+                            showValidationMessage(field, getPostalCodeValidationMessage(country));
+                        }
+                    }
+                    
+                    if (field.type === 'email') {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(field.value)) {
+                            isValid = false;
+                            field.classList.add('is-invalid');
+                            showValidationMessage(field, 'Please enter a valid email address');
+                        }
+                    }
+                }
+            });
+            
+            return isValid;
+        };
+        
+        // Validate on blur
+        if (addressForm) {
+            addressForm.querySelectorAll('[required]').forEach(field => {
+                field.addEventListener('blur', validateForm);
+                field.addEventListener('input', function() {
+                    if (this.classList.contains('is-invalid')) {
+                        this.classList.remove('is-invalid');
+                        hideValidationMessage(this);
+                    }
+                });
+            });
+        }
+        
+        // Form submission
+        if (addressForm) {
+            addressForm.addEventListener('submit', function(e) {
+                // Check if address limit reached (for new addresses)
+                {'% if addresses.count >= 3 and not address %'}
+                e.preventDefault();
+                e.stopPropagation();
+                showToast('You have reached the maximum limit of 3 addresses. Please edit or delete an existing address.', 'error');
+                return false;
+                {'% endif %'}
+                
+                if (!validateForm()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Scroll to first invalid field
+                    const firstInvalid = addressForm.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                        firstInvalid.focus();
+                    }
+                    
+                    showToast('Please fix the errors in the form before submitting.', 'error');
+                    return false;
+                }
+                
+                // Disable button and show loading
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.classList.add('loading');
+                    saveBtn.innerHTML = `
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        {% if address %}Updating Address...{% else %}Saving Address...{% endif %}
+                    `;
+                }
+                
+                return true;
+            });
+        }
+        
+        // Initialize country select with Pakistan as default if not already selected
+        if (countrySelect && !countrySelect.value) {
+            countrySelect.value = 'Pakistan';
+        }
+    });
+</script>
 {% endblock %}

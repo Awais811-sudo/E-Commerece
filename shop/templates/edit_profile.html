@@ -1,22 +1,612 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container">
-    <h2>Edit Profile</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="id_username">Username:</label>
-            <input type="text" name="username" id="id_username" value="{{ user.username }}" required>
+<div class="edit-profile-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold mb-3">Edit Profile</h1>
+                    <p class="text-muted">Update your personal information and profile settings</p>
+                </div>
+
+                <!-- Profile Card -->
+                <div class="profile-card shadow-lg rounded-4 overflow-hidden">
+                    <div class="profile-header bg-gradient-primary py-4 px-5 text-white">
+                        <div class="d-flex align-items-center">
+                            <div class="profile-avatar-wrapper me-4">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" 
+                                         class="profile-avatar" id="profilePreview">
+                                {% else %}
+                                    <div class="profile-avatar-placeholder" id="profilePreview">
+                                        {{ user.username|make_list|first|upper }}
+                                    </div>
+                                {% endif %}
+                                <div class="avatar-overlay">
+                                    <i class="bi bi-camera-fill"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="mb-1">{{ user.username }}</h3>
+                                <p class="mb-0 opacity-75">Member since {{ user.date_joined|date:"F Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-body p-4 p-md-5">
+                        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- Profile Picture Upload -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold mb-3">Profile Picture</label>
+                                <div class="upload-area p-4 border rounded-3 bg-light text-center">
+                                    <input type="file" name="profile_picture" id="id_profile_picture" 
+                                           class="d-none" accept="image/*">
+                                    <label for="id_profile_picture" class="upload-label cursor-pointer">
+                                        <div class="upload-icon mb-3">
+                                            <i class="bi bi-cloud-arrow-up display-4 text-primary"></i>
+                                        </div>
+                                        <h5 class="mb-2">Click to upload photo</h5>
+                                        <p class="text-muted mb-0">PNG, JPG or JPEG (Max. 5MB)</p>
+                                    </label>
+                                    <div class="upload-preview mt-3 d-none" id="uploadPreview">
+                                        <img src="" alt="Preview" class="img-fluid rounded-3" style="max-height: 200px;">
+                                    </div>
+                                </div>
+                                <div class="form-text">Recommended: Square image, at least 400x400 pixels</div>
+                            </div>
+
+                            <!-- Personal Information -->
+                            <div class="mb-4">
+                                <h5 class="fw-semibold mb-3 border-bottom pb-2">Personal Information</h5>
+                                
+                                <div class="row g-3">
+                                    <!-- Username -->
+                                    <div class="col-md-6">
+                                        <label for="id_username" class="form-label">
+                                            Username <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-person-circle"></i>
+                                            </span>
+                                            <input type="text" name="username" id="id_username" 
+                                                   class="form-control form-control-lg"
+                                                   value="{{ user.username }}" 
+                                                   required
+                                                   placeholder="Enter username">
+                                        </div>
+                                        <div class="form-text">This will be visible to other users</div>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div class="col-md-6">
+                                        <label for="id_email" class="form-label">
+                                            Email Address <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-envelope"></i>
+                                            </span>
+                                            <input type="email" name="email" id="id_email" 
+                                                   class="form-control form-control-lg"
+                                                   value="{{ user.email }}" 
+                                                   required
+                                                   placeholder="Enter email address">
+                                        </div>
+                                        <div class="form-text">We'll never share your email with anyone</div>
+                                    </div>
+
+                                    <!-- First Name (if available) -->
+                                    {% if user.first_name %}
+                                    <div class="col-md-6">
+                                        <label for="id_first_name" class="form-label">First Name</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-person"></i>
+                                            </span>
+                                            <input type="text" name="first_name" id="id_first_name" 
+                                                   class="form-control form-control-lg"
+                                                   value="{{ user.first_name }}"
+                                                   placeholder="First name">
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Last Name (if available) -->
+                                    {% if user.last_name %}
+                                    <div class="col-md-6">
+                                        <label for="id_last_name" class="form-label">Last Name</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-person"></i>
+                                            </span>
+                                            <input type="text" name="last_name" id="id_last_name" 
+                                                   class="form-control form-control-lg"
+                                                   value="{{ user.last_name }}"
+                                                   placeholder="Last name">
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Optional: Additional Fields -->
+                            <div class="mb-4">
+                                <h5 class="fw-semibold mb-3 border-bottom pb-2">Additional Information</h5>
+                                
+                                <!-- Bio -->
+                                <div class="mb-3">
+                                    <label for="id_bio" class="form-label">Bio</label>
+                                    <textarea name="bio" id="id_bio" 
+                                              class="form-control form-control-lg"
+                                              rows="4"
+                                              placeholder="Tell us a little about yourself...">{% if user.bio %}{{ user.bio }}{% endif %}</textarea>
+                                    <div class="form-text">Max 500 characters</div>
+                                </div>
+
+                                <!-- Phone Number (if available) -->
+                                {% if user.phone_number %}
+                                <div class="mb-3">
+                                    <label for="id_phone" class="form-label">Phone Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-telephone"></i>
+                                        </span>
+                                        <input type="tel" name="phone_number" id="id_phone" 
+                                               class="form-control form-control-lg"
+                                               value="{{ user.phone_number }}"
+                                               placeholder="Phone number">
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Location (if available) -->
+                                {% if user.location %}
+                                <div class="mb-3">
+                                    <label for="id_location" class="form-label">Location</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-geo-alt"></i>
+                                        </span>
+                                        <input type="text" name="location" id="id_location" 
+                                               class="form-control form-control-lg"
+                                               value="{{ user.location }}"
+                                               placeholder="City, Country">
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-between align-items-center pt-4 border-top">
+                                <a href="{% url 'profile' %}" class="btn btn-outline-secondary btn-lg px-4">
+                                    <i class="bi bi-arrow-left me-2"></i>Cancel
+                                </a>
+                                
+                                <div class="d-flex gap-3">
+                                    <button type="reset" class="btn btn-outline-danger btn-lg px-4">
+                                        <i class="bi bi-arrow-clockwise me-2"></i>Reset
+                                    </button>
+                                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                                        <i class="bi bi-check-circle me-2"></i>Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+               
+            </div>
         </div>
-        <div class="form-group">
-            <label for="id_email">Email:</label>
-            <input type="email" name="email" id="id_email" value="{{ user.email }}" required>
-        </div>
-        <div class="form-group">
-            <label for="id_profile_picture">Profile Picture:</label>
-            <input type="file" name="profile_picture" id="id_profile_picture">
-        </div>
-        <button type="submit">Save Changes</button>
-    </form>
+    </div>
 </div>
+
+<style>
+    /* Edit Profile Section */
+    .edit-profile-section {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    /* Profile Card */
+    .profile-card {
+        background: white;
+        transition: transform 0.3s ease;
+    }
+
+    .profile-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Profile Avatar */
+    .profile-avatar-wrapper {
+        position: relative;
+        width: 100px;
+        height: 100px;
+    }
+
+    .profile-avatar {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid white;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .profile-avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2.5rem;
+        font-weight: bold;
+        border: 4px solid white;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .avatar-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        cursor: pointer;
+    }
+
+    .profile-avatar-wrapper:hover .avatar-overlay {
+        opacity: 1;
+    }
+
+    .avatar-overlay i {
+        font-size: 1.5rem;
+    }
+
+    /* Upload Area */
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+
+    .upload-area:hover {
+        border-color: #667eea;
+        background: #f0f3ff;
+    }
+
+    .upload-label {
+        cursor: pointer;
+        display: block;
+    }
+
+    .upload-icon {
+        color: #667eea;
+    }
+
+    /* Form Styles */
+    .form-control-lg {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border-radius: 0.75rem;
+        border: 2px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+
+    .form-control-lg:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+    }
+
+    .input-group-text {
+        background: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-right: none;
+        color: #667eea;
+    }
+
+    .input-group .form-control-lg {
+        border-left: none;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    /* Buttons */
+    .btn-lg {
+        padding: 0.75rem 2rem;
+        border-radius: 0.75rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-outline-secondary {
+        border: 2px solid #dee2e6;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #f8f9fa;
+        border-color: #adb5bd;
+    }
+
+    .btn-outline-danger {
+        border: 2px solid #dc3545;
+        color: #dc3545;
+    }
+
+    .btn-outline-danger:hover {
+        background: #dc3545;
+        color: white;
+    }
+
+    /* Quick Links */
+    .quick-links a {
+        color: #667eea;
+        transition: color 0.3s ease;
+    }
+
+    .quick-links a:hover {
+        color: #764ba2;
+    }
+
+    /* Validation */
+    .was-validated .form-control:invalid,
+    .form-control.is-invalid {
+        border-color: #dc3545;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+
+    .was-validated .form-control:valid,
+    .form-control.is-valid {
+        border-color: #198754;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .profile-header {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+        
+        .profile-header .d-flex {
+            flex-direction: column;
+        }
+        
+        .profile-avatar-wrapper {
+            margin: 0 auto 1rem auto;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .form-actions .d-flex {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .btn-lg {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .profile-avatar-wrapper {
+            width: 80px;
+            height: 80px;
+        }
+        
+        .profile-avatar-placeholder {
+            font-size: 2rem;
+        }
+        
+        .profile-body {
+            padding: 1.5rem !important;
+        }
+        
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .d-flex.gap-3 {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .profile-card {
+        animation: fadeIn 0.6s ease-out;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Profile picture preview
+        const profilePictureInput = document.getElementById('id_profile_picture');
+        const profilePreview = document.getElementById('profilePreview');
+        const uploadPreview = document.getElementById('uploadPreview');
+        const uploadLabel = document.querySelector('.upload-label');
+        const avatarOverlay = document.querySelector('.avatar-overlay');
+        
+        // Click avatar to trigger file input
+        if (avatarOverlay) {
+            avatarOverlay.addEventListener('click', function() {
+                profilePictureInput.click();
+            });
+        }
+        
+        // Click upload area to trigger file input
+        if (uploadLabel) {
+            uploadLabel.addEventListener('click', function(e) {
+                e.preventDefault();
+                profilePictureInput.click();
+            });
+        }
+        
+        // Handle file selection
+        profilePictureInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // Update profile preview
+                    if (profilePreview.tagName === 'IMG') {
+                        profilePreview.src = e.target.result;
+                    } else {
+                        // Replace placeholder with image
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = "Profile Picture";
+                        img.className = "profile-avatar";
+                        profilePreview.parentNode.replaceChild(img, profilePreview);
+                    }
+                    
+                    // Show upload preview
+                    const previewImg = uploadPreview.querySelector('img');
+                    previewImg.src = e.target.result;
+                    uploadPreview.classList.remove('d-none');
+                }
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+        
+        // Reset form
+        const resetBtn = form.querySelector('button[type="reset"]');
+        resetBtn.addEventListener('click', function() {
+            form.classList.remove('was-validated');
+            
+            // Reset preview to original
+            if ('{{ user.profile_picture }}') {
+                // If original had image, reset to it
+                // This would need server-side implementation for full reset
+                // For now, just reload the page
+                window.location.reload();
+            }
+        });
+        
+        // Character counter for bio
+        const bioTextarea = document.getElementById('id_bio');
+        if (bioTextarea) {
+            const charCounter = document.createElement('div');
+            charCounter.className = 'form-text text-end';
+            charCounter.id = 'charCounter';
+            bioTextarea.parentNode.appendChild(charCounter);
+            
+            function updateCharCounter() {
+                const maxLength = 500;
+                const currentLength = bioTextarea.value.length;
+                charCounter.textContent = `${currentLength}/${maxLength} characters`;
+                
+                if (currentLength > maxLength) {
+                    charCounter.style.color = '#dc3545';
+                    bioTextarea.classList.add('is-invalid');
+                } else {
+                    charCounter.style.color = '#6c757d';
+                    bioTextarea.classList.remove('is-invalid');
+                }
+            }
+            
+            bioTextarea.addEventListener('input', updateCharCounter);
+            updateCharCounter(); // Initial call
+        }
+        
+        // Email validation
+        const emailInput = document.getElementById('id_email');
+        emailInput.addEventListener('blur', function() {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(emailInput.value)) {
+                emailInput.classList.add('is-invalid');
+            } else {
+                emailInput.classList.remove('is-invalid');
+            }
+        });
+        
+        // Username validation (no spaces)
+        const usernameInput = document.getElementById('id_username');
+        usernameInput.addEventListener('blur', function() {
+            const usernameRegex = /^\S+$/;
+            if (!usernameRegex.test(usernameInput.value)) {
+                usernameInput.classList.add('is-invalid');
+            } else {
+                usernameInput.classList.remove('is-invalid');
+            }
+        });
+    });
+</script>
 {% endblock %}

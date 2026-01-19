@@ -5,20 +5,6 @@
 {% block content %}
 <style>
     /* ========== PRODUCT DETAIL STYLES ========== */
-    :root {
-        --primary-dark: #4936A2;
-        --primary-accent: #382d9c;
-        --secondary-dark: #606a7d;
-        --text-light: #f8f9fa;
-        --text-muted: #9ca3af;
-        --bg-light: #fcfdff;
-        --danger: #ef4444;
-        --text-color: #1f2937;
-        --border-radius: 12px;
-        --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --transition: all 0.3s ease;
-    }
-
     .product-detail-container {
         margin-top: 2rem;
         margin-bottom: 4rem;
@@ -116,7 +102,7 @@
         color: var(--text-muted);
         font-size: 0.9rem;
     }
-.form-control
+
     /* Price Section */
     .price-section {
         margin-bottom: 1.5rem;
@@ -154,7 +140,7 @@
     }
 
     .in-stock {
-        color: #10b981;
+        color: var(--success);
     }
 
     .out-of-stock {
@@ -181,6 +167,17 @@
         flex: 1;
         height: 1px;
         background: rgba(0, 0, 0, 0.1);
+    }
+
+    .variant-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .variant-group-error {
+        box-shadow: 0 0 0 2px var(--danger) !important;
+        border-radius: var(--border-radius);
+        padding: 0.5rem;
+        animation: pulse-error 2s infinite;
     }
 
     .variant-options {
@@ -210,25 +207,6 @@
         min-width: 80px;
     }
 
-    /* Color variant specific styles */
-    .variant-label.color-option {
-        position: relative;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        padding: 0;
-        overflow: hidden;
-        border: 2px solid transparent;
-    }
-
-    .color-swatch {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-    }
-
     /* Selected state */
     .variant-radio:checked + .variant-label {
         border-color: var(--primary-dark);
@@ -236,11 +214,6 @@
         color: var(--primary-dark);
         transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(73, 54, 162, 0.1);
-    }
-
-    .variant-radio:checked + .color-option {
-        border-color: var(--primary-dark);
-        box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary-dark);
     }
 
     .variant-radio:focus + .variant-label {
@@ -254,7 +227,7 @@
         text-decoration: line-through;
     }
 
-    /* Action Buttons */
+    /* Action Buttons - UPDATED FOR RESPONSIVENESS */
     .action-buttons {
         display: flex;
         gap: 1rem;
@@ -270,16 +243,23 @@
         font-weight: 600;
         transition: var(--transition);
         flex: 1;
+        cursor: pointer;
+        position: relative;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
         background-color: var(--primary-accent);
         transform: translateY(-2px);
         box-shadow: 0 10px 15px -3px rgba(73, 54, 162, 0.3);
     }
 
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
     .btn-secondary {
-        background-color: #f59e0b;
+        background-color: var(--secondary-dark);
         color: white;
         border: none;
         padding: 1rem 2rem;
@@ -290,9 +270,9 @@
     }
 
     .btn-secondary:hover {
-        background-color: #f68b0b;
+        background-color: #4a5568;
         transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+        box-shadow: 0 10px 15px -3px rgba(74, 85, 104, 0.3);
     }
 
     .btn-outline {
@@ -308,10 +288,28 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
+        position: relative;
     }
 
     .btn-outline:hover {
         background-color: rgba(73, 54, 162, 0.1);
+    }
+
+    /* Loading spinner for buttons */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: 8px;
+    }
+
+    .btn-outline .loading-spinner {
+        border: 2px solid rgba(73, 54, 162, 0.3);
+        border-top-color: var(--primary-dark);
     }
 
     /* Product Description */
@@ -415,7 +413,7 @@
         font-weight: 600;
     }
 
-    /* Review Form */
+    /* Review Form & Messages */
     .review-form-container {
         background: white;
         border-radius: var(--border-radius);
@@ -443,15 +441,40 @@
         transition: var(--transition);
     }
 
-    .form-control:focus {
+    .form-control-1:focus {
         border-color: var(--primary-dark);
         outline: none;
         box-shadow: 0 0 0 3px rgba(73, 54, 162, 0.2);
     }
 
-    textarea.form-control {
+    textarea.form-control-1 {
         min-height: 150px;
         resize: vertical;
+    }
+
+    /* Alert Styles */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1rem;
+    }
+
+    .alert-info {
+        background-color: rgba(59, 130, 246, 0.1);
+        border-left: 4px solid var(--info);
+        color: #1e40af;
+    }
+
+    .alert-warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        border-left: 4px solid var(--warning);
+        color: #92400e;
+    }
+
+    .alert-link {
+        color: inherit;
+        text-decoration: underline;
+        font-weight: 600;
     }
 
     /* Related Products */
@@ -471,6 +494,8 @@
         overflow: hidden;
         box-shadow: var(--box-shadow);
         transition: var(--transition);
+        text-decoration: none;
+        color: inherit;
     }
 
     .related-product:hover {
@@ -509,6 +534,64 @@
         color: #fbbf24;
     }
 
+    /* Toast Styles */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: var(--border-radius);
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .toast.success {
+        background-color: var(--success);
+    }
+
+    .toast.error {
+        background-color: var(--danger);
+    }
+
+    .toast.warning {
+        background-color: var(--warning);
+    }
+
+    .toast.info {
+        background-color: var(--info);
+    }
+
+    /* Animations */
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse-error {
+        0%, 100% {
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.7);
+        }
+        50% {
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+        }
+    }
+
     /* Responsive Adjustments */
     @media (max-width: 768px) {
         .main-image-container {
@@ -517,6 +600,11 @@
         
         .action-buttons {
             flex-direction: column;
+        }
+        
+        .btn-primary,
+        .btn-secondary {
+            width: 100%;
         }
         
         .related-products {
@@ -584,84 +672,136 @@
                 
                 <!-- Variant Selectors -->
                 {% if wattages or colors or shapes or sizes %}
-                    <div class="variant-section">
-                        {% if wattages %}
-                            <div class="variant-group">
-                                <h3 class="variant-title">Wattage</h3>
-                                <div class="variant-options">
-                                    {% for watt in wattages %}
-                                        <div class="variant-option">
-                                            <input type="radio" id="wattage-{{ watt }}" name="wattage" value="{{ watt }}" class="variant-radio">
-                                            <label for="wattage-{{ watt }}" class="variant-label">{{ watt }}W</label>
-                                        </div>
-                                    {% endfor %}
+        <div class="variant-section">
+            <input type="hidden" id="selected-variant-id" name="variant_id">
+            
+            {% if wattages %}
+                <div class="variant-group">
+                    <h3 class="variant-title">Wattage</h3>
+                    <div class="variant-options">
+                        {% for variant in product.variants.all %}
+                            {% if variant.wattage %}
+                                <div class="variant-option">
+                                    <input type="radio" 
+                                           id="wattage-{{ variant.id }}" 
+                                           name="wattage" 
+                                           value="{{ variant.id }}" 
+                                           class="variant-radio"
+                                           data-variant-id="{{ variant.id }}">
+                                    <label for="wattage-{{ variant.id }}" class="variant-label">
+                                        {{ variant.wattage }}W 
+                                        {% if variant.additional_price %}
+                                            <small class="text-success">(+Rs {{ variant.additional_price }})</small>
+                                        {% endif %}
+                                    </label>
                                 </div>
-                            </div>
-                        {% endif %}
-                        
-                        {% if colors %}
-                            <div class="variant-group">
-                                <h3 class="variant-title">Color</h3>
-                                <div class="variant-options">
-                                    {% for color in colors %}
-                                        <div class="variant-option">
-                                            <input type="radio" id="color-{{ color }}" name="color" value="{{ color }}" class="variant-radio">
-                                            <label for="color-{{ color }}" class="variant-label color-option">
-                                                <span class="color-swatch" style="background-color: '{{ color }}';"></span>
-                                            </label>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endif %}
-                        
-                        {% if shapes %}
-                            <div class="variant-group">
-                                <h3 class="variant-title">Shape</h3>
-                                <div class="variant-options">
-                                    {% for shape in shapes %}
-                                        <div class="variant-option">
-                                            <input type="radio" id="shape-{{ shape }}" name="shape" value="{{ shape }}" class="variant-radio">
-                                            <label for="shape-{{ shape }}" class="variant-label">{{ shape }}</label>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endif %}
-                        
-                        {% if sizes %}
-                            <div class="variant-group">
-                                <h3 class="variant-title">Size</h3>
-                                <div class="variant-options">
-                                    {% for size in sizes %}
-                                        <div class="variant-option">
-                                            <input type="radio" id="size-{{ size }}" name="size" value="{{ size }}" class="variant-radio">
-                                            <label for="size-{{ size }}" class="variant-label">{{ size }}</label>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endif %}
+                            {% endif %}
+                        {% endfor %}
                     </div>
-                {% endif %}
+                </div>
+            {% endif %}
+            
+            {% if colors %}
+                <div class="variant-group">
+                    <h3 class="variant-title">Color</h3>
+                    <div class="variant-options">
+                        {% for variant in product.variants.all %}
+                            {% if variant.color %}
+                                <div class="variant-option">
+                                    <input type="radio" 
+                                           id="color-{{ variant.id }}" 
+                                           name="color" 
+                                           value="{{ variant.id }}" 
+                                           class="variant-radio"
+                                           data-variant-id="{{ variant.id }}">
+                                    <label for="color-{{ variant.id }}" class="variant-label">
+                                        {{ variant.color }}
+                                        {% if variant.additional_price %}
+                                            <small class="text-success">(+Rs {{ variant.additional_price }})</small>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            {% if shapes %}
+                <div class="variant-group">
+                    <h3 class="variant-title">Shape</h3>
+                    <div class="variant-options">
+                        {% for variant in product.variants.all %}
+                            {% if variant.shape %}
+                                <div class="variant-option">
+                                    <input type="radio" 
+                                           id="shape-{{ variant.id }}" 
+                                           name="shape" 
+                                           value="{{ variant.id }}" 
+                                           class="variant-radio"
+                                           data-variant-id="{{ variant.id }}">
+                                    <label for="shape-{{ variant.id }}" class="variant-label">
+                                        {{ variant.shape }}
+                                        {% if variant.additional_price %}
+                                            <small class="text-success">(+Rs {{ variant.additional_price }})</small>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            {% if sizes %}
+                <div class="variant-group">
+                    <h3 class="variant-title">Size</h3>
+                    <div class="variant-options">
+                        {% for variant in product.variants.all %}
+                            {% if variant.size %}
+                                <div class="variant-option">
+                                    <input type="radio" 
+                                           id="size-{{ variant.id }}" 
+                                           name="size" 
+                                           value="{{ variant.id }}" 
+                                           class="variant-radio"
+                                           data-variant-id="{{ variant.id }}">
+                                    <label for="size-{{ variant.id }}" class="variant-label">
+                                        {{ variant.size }}
+                                        {% if variant.additional_price %}
+                                            <small class="text-success">(+Rs {{ variant.additional_price }})</small>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
                 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <form id="add-to-cart-form" method="post" action="{% url 'add_to_cart' product.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">
-                            <span id="cartText">Add to Cart</span>
-                        </button>
-                    </form>
-                    <button class="btn btn-secondary">Buy Now</button>
+                    <button type="button" class="btn btn-primary" id="add-to-cart-btn"
+                            data-product-id="{{ product.id }}"
+                            {% if product.stock == 0 %}disabled{% endif %}>
+                        <i class="bi bi-cart3 me-1"></i>
+                        <span id="cart-text">Add to Cart</span>
+                    </button>
+                    
                 </div>
                 
-                <form id="add-to-wishlist-form" class="wishlist-form">
-                    {% csrf_token %}
-                    <button type="button" class="btn btn-outline">
-                        <span>❤️</span> Add to Wishlist
-                    </button>
-                </form>
+                <button type="button" class="btn btn-outline" id="wishlist-btn" data-product-id="{{ product.id }}">
+                    <i class="bi {% if product.id in wishlist_product_ids %}bi-heart-fill text-danger{% else %}bi-heart{% endif %} me-1"></i>
+                    <span id="wishlist-text">
+                        {% if product.id in wishlist_product_ids %}
+                            Remove from Wishlist
+                        {% else %}
+                            Add to Wishlist
+                        {% endif %}
+                    </span>
+                </button>
             </div>
         </div>
     </div>
@@ -691,6 +831,7 @@
             </div>
         </div>
         
+        <!-- Reviews List -->
         {% if product.reviews.all %}
             {% for review in product.reviews.all %}
                 <div class="review-card">
@@ -709,11 +850,11 @@
                     <div class="review-content">
                         {{ review.comment|linebreaks }}
                     </div>
-                    <div class="review-helpful">
+                    <!-- <div class="review-helpful">
                         <span>Was this review helpful?</span>
                         <button type="button">Yes</button>
                         <button type="button">No</button>
-                    </div>
+                    </div> -->
                 </div>
             {% endfor %}
         {% else %}
@@ -723,28 +864,57 @@
             </div>
         {% endif %}
         
-        <!-- Review Form -->
-        <div class="review-form-container">
-            <h3 class="section-title">Write a Review</h3>
-            <form method="post" action="{% url 'add_review' product.slug %}">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="rating" class="form-label">Rating</label>
-                    <select class="form-control" id="rating" name="rating">
-                        <option value="5">5 Stars - Excellent</option>
-                        <option value="4">4 Stars - Very Good</option>
-                        <option value="3">3 Stars - Good</option>
-                        <option value="2">2 Stars - Fair</option>
-                        <option value="1">1 Star - Poor</option>
-                    </select>
+        <!-- Review Form / Messages -->
+        {% if user.is_authenticated %}
+            {% if user_has_reviewed %}
+                <div class="review-form-container" id="already-reviewed-message">
+                    <h3 class="section-title">You've Already Reviewed This Product</h3>
+                    <div class="alert alert-info">
+                        <p>You have already submitted a review for this product on {{ user_review.created_at|date:"F j, Y" }}.</p>
+                        <p class="mb-0">Rating: 
+                            <div class="stars d-inline-block">
+                                {% include 'partials/star_rating.html' with rating=user_review.rating %}
+                            </div>
+                        </p>
+                        {% if user_review.comment %}
+                            <p class="mt-2">Your review: "{{ user_review.comment|truncatechars:100 }}"</p>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="comment" class="form-label">Your Review</label>
-                    <textarea class="form-control-1" id="comment" name="comment" rows="5" placeholder="Share your thoughts about this product..."></textarea>
+            {% else %}
+                <div class="review-form-container" id="review-form-container">
+                    <h3 class="section-title">Write a Review</h3>
+                    <form method="post" action="{% url 'add_review' product.slug %}" id="review-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="rating" class="form-label">Rating *</label>
+                            <select class="form-control-1" id="rating" name="rating" required>
+                                <option value="" disabled selected>Select rating</option>
+                                <option value="5">5 Stars - Excellent</option>
+                                <option value="4">4 Stars - Very Good</option>
+                                <option value="3">3 Stars - Good</option>
+                                <option value="2">2 Stars - Fair</option>
+                                <option value="1">1 Star - Poor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="comment" class="form-label">Your Review *</label>
+                            <textarea class="form-control-1" id="comment" name="comment" rows="5" required 
+                                      placeholder="Share your thoughts about this product..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="submit-review-btn">Submit Review</button>
+                    </form>
                 </div>
-                <button type="submit" class="btn btn-primary">Submit Review</button>
-            </form>
-        </div>
+            {% endif %}
+        {% else %}
+            <div class="review-form-container" id="login-required-message">
+                <h3 class="section-title">Login to Add a Review</h3>
+                <div class="alert alert-warning">
+                    <p>Please <a href="{% url 'login' %}?next={{ request.path }}" class="alert-link">login</a> to submit a review for this product.</p>
+                    <p class="mb-0">If you don't have an account, <a href="{% url 'signup' %}" class="alert-link">register here</a>.</p>
+                </div>
+            </div>
+        {% endif %}
     </div>
     
     <!-- Related Products -->
@@ -752,12 +922,13 @@
         <h2 class="section-title">You May Also Like</h2>
         <div class="related-products">
             {% for item in recommended_products %}
+                {% if item.slug and item.slug.strip %}
                 <a href="{% url 'product_detail' item.slug %}" class="related-product">
-                    {% if item.images.all %}
-                        <img src="{{ item.images.all.0.image.url }}" alt="{{ item.name }}" class="related-product-image">
-                    {% else %}
-                        <img src="{% static 'placeholder.png' %}" alt="{{ item.name }}" class="related-product-image">
-                    {% endif %}
+                    {% with item.images.all as product_images %}
+                        <img src="{% if product_images|length %}{{ product_images.0.image.url }}{% else %}{% static 'placeholder.png' %}{% endif %}" 
+                             alt="{{ item.name }}" 
+                             class="related-product-image">
+                    {% endwith %}
                     <div class="related-product-info">
                         <h3 class="related-product-title">{{ item.name|truncatechars:40 }}</h3>
                         <div class="related-product-price">
@@ -774,6 +945,7 @@
                         </div>
                     </div>
                 </a>
+                {% endif %}
             {% endfor %}
         </div>
     </div>
@@ -804,147 +976,314 @@
         }
     });
 
-    // Variant selection and price update
-    document.addEventListener("DOMContentLoaded", function() {
-        const variantsData = JSON.parse('{{ variants_data|escapejs }}');
-        const variantRadios = document.querySelectorAll('.variant-radio');
-        const priceDisplay = document.querySelector('.price-section');
-        const basePrice = parseFloat("{{ product.price }}");
-        const discountPrice = '{% if product.discount_price %} parseFloat("{{ product.discount_price }}") {% else %} null {% endif %}';
+    // Get CSRF token
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+               document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+    }
 
-        function findVariant() {
-            let selection = {};
-            variantRadios.forEach(function(radio) {
-                if (radio.checked) {
-                    selection[radio.name] = radio.value;
-                }
-            });
-            return variantsData.find(function(variant) {
-                return (!selection.wattage || variant.wattage == selection.wattage) &&
-                       (!selection.color || variant.color == selection.color) &&
-                       (!selection.shape || variant.shape == selection.shape) &&
-                       (!selection.size || variant.size == selection.size);
-            });
-        }
-
-        function updatePrice() {
-            const variant = findVariant();
-            if (variant && variant.additional_price !== null) {
-                priceDisplay.innerHTML = `
-                    <span class="current-price">Rs ${parseFloat(variant.additional_price).toFixed(2)}</span>
-                `;
-            } else {
-                if (discountPrice !== null) {
-                    priceDisplay.innerHTML = `
-                        <span class="current-price">Rs ${discountPrice.toFixed(2)}</span>
-                        <span class="original-price">Rs ${basePrice.toFixed(2)}</span>
-                        <span class="discount-badge">Save Rs ${(basePrice - discountPrice).toFixed(2)}</span>
-                    `;
-                } else {
-                    priceDisplay.innerHTML = `<span class="current-price">Rs ${basePrice.toFixed(2)}</span>`;
-                }
-            }
-        }
-
-        variantRadios.forEach(function(radio) {
-            radio.addEventListener('change', updatePrice);
-        });
-    });
-
-    // Toast notification function
+    // Show toast notification
     function showToast(message, type = 'success') {
+        // Remove existing toasts
+        document.querySelectorAll('.toast').forEach(toast => toast.remove());
+        
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.innerHTML = `
-            <span class="toast-icon">${type === 'success' ? '✓' : '⚠'}</span>
+            <span class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '⚠' : type === 'warning' ? '⚠' : 'ℹ'}</span>
             <span class="toast-message">${message}</span>
         `;
         document.body.appendChild(toast);
         
+        // Auto remove after 3 seconds
         setTimeout(() => {
-            toast.remove();
+            if (toast.parentNode) {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 300);
+            }
         }, 3000);
     }
 
-    // Cart and wishlist functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const cartForm = document.getElementById('add-to-cart-form');
-        const wishlistForm = document.getElementById('add-to-wishlist-form');
+    // Add to cart function
+    async function addToCart(productId, variantId = null) {
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        const cartText = document.getElementById('cart-text');
         
-        if (cartForm) {
-            cartForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const button = cartForm.querySelector('button');
-                const originalText = button.innerHTML;
-                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
+        // Prevent multiple clicks
+        if (addToCartBtn.hasAttribute('data-processing')) return;
+        addToCartBtn.setAttribute('data-processing', 'true');
+        
+        // Save original state
+        const originalText = cartText.textContent;
+        const originalHTML = addToCartBtn.innerHTML;
+        
+        // Show loading state
+        addToCartBtn.innerHTML = '<span class="loading-spinner"></span> Adding...';
+        addToCartBtn.disabled = true;
+        
+        try {
+            const csrftoken = getCSRFToken();
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', csrftoken);
+            
+            if (variantId) {
+                formData.append('variant_id', variantId);
+            }
+            
+            const response = await fetch(`/add-to-cart/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData,
+                credentials: 'include'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Show success
+                showToast('Product added to cart!', 'success');
                 
-                try {
-                    const response = await fetch(cartForm.action, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                        },
-                        body: new FormData(cartForm)
-                    });
+                // Update button state
+                cartText.textContent = 'Added!';
+                addToCartBtn.style.backgroundColor = '#10b981';
+                
+                // Update cart count in header
+                const cartBadge = document.getElementById('cart-badge');
+                if (cartBadge && data.cart_count !== undefined) {
+                    cartBadge.textContent = data.cart_count;
+                    cartBadge.classList.add('badge-pulse');
+                    setTimeout(() => cartBadge.classList.remove('badge-pulse'), 500);
+                }
+                
+                // Revert button after 2 seconds
+                setTimeout(() => {
+                    cartText.textContent = originalText;
+                    addToCartBtn.style.backgroundColor = '';
+                    addToCartBtn.innerHTML = originalHTML;
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.removeAttribute('data-processing');
+                }, 2000);
+            } else {
+                showToast('Error: ' + (data.error || 'Failed to add to cart'), 'error');
+                addToCartBtn.innerHTML = originalHTML;
+                addToCartBtn.disabled = false;
+                addToCartBtn.removeAttribute('data-processing');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Network error. Please try again.', 'error');
+            addToCartBtn.innerHTML = originalHTML;
+            addToCartBtn.disabled = false;
+            addToCartBtn.removeAttribute('data-processing');
+        }
+    }
+
+    // Toggle wishlist function
+    async function toggleWishlist(productId) {
+        const wishlistBtn = document.getElementById('wishlist-btn');
+        const heartIcon = wishlistBtn.querySelector('i');
+        const wishlistText = document.getElementById('wishlist-text');
+        
+        // Prevent multiple clicks
+        if (wishlistBtn.hasAttribute('data-processing')) return;
+        wishlistBtn.setAttribute('data-processing', 'true');
+        
+        // Save original state
+        const originalText = wishlistText.textContent;
+        const originalHTML = wishlistBtn.innerHTML;
+        
+        // Show loading state
+        heartIcon.className = 'bi bi-arrow-clockwise me-1';
+        wishlistText.textContent = 'Processing...';
+        wishlistBtn.disabled = true;
+        
+        try {
+            const csrftoken = getCSRFToken();
+            
+            const response = await fetch(`/add-to-wishlist/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
+                credentials: 'include'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update UI based on action
+                if (data.action === 'added') {
+                    heartIcon.className = 'bi bi-heart-fill me-1 text-danger';
+                    wishlistText.textContent = 'Remove from Wishlist';
+                    showToast('Added to wishlist!', 'success');
+                } else {
+                    heartIcon.className = 'bi bi-heart me-1';
+                    wishlistText.textContent = 'Add to Wishlist';
+                    showToast('Removed from wishlist', 'info');
+                }
+                
+                // Update wishlist count in header
+                const wishlistBadge = document.getElementById('wishlist-badge');
+                if (wishlistBadge && data.wishlist_count !== undefined) {
+                    wishlistBadge.textContent = data.wishlist_count;
+                    wishlistBadge.classList.add('badge-pulse');
+                    setTimeout(() => wishlistBadge.classList.remove('badge-pulse'), 500);
+                }
+            } else {
+                showToast('Error: ' + (data.error || 'Failed to update wishlist'), 'error');
+                wishlistBtn.innerHTML = originalHTML;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Network error. Please try again.', 'error');
+            wishlistBtn.innerHTML = originalHTML;
+        } finally {
+            wishlistBtn.disabled = false;
+            wishlistBtn.removeAttribute('data-processing');
+        }
+    }
+
+    // Initialize event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Variant selection logic
+        const variantRadios = document.querySelectorAll('.variant-radio');
+        let selectedVariantId = null;
+        
+        variantRadios.forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                const variantId = this.getAttribute('data-variant-id');
+                if (variantId) {
+                    selectedVariantId = variantId;
                     
-                    const data = await response.json();
-                    if (data.success) {
-                        showToast('Product added to cart!');
-                        // Update cart count in navbar
-                        document.querySelectorAll('.badge-notification').forEach(el => {
-                            if (el.closest('a[href*="cart"]')) {
-                                el.textContent = data.cart_count;
-                            }
-                        });
-                    } else {
-                        showToast(data.error || 'Failed to add to cart', 'error');
-                    }
-                } catch (error) {
-                    showToast('Network error. Please try again.', 'error');
-                } finally {
-                    button.innerHTML = originalText;
+                    // Remove error state from all variant groups
+                    document.querySelectorAll('.variant-group').forEach(group => {
+                        group.classList.remove('variant-group-error');
+                    });
                 }
             });
+        });
+        
+        // Add to cart button click
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const variantGroups = document.querySelectorAll('.variant-group');
+                const hasVariants = variantGroups.length > 0;
+                
+                // Check if variant is required but not selected
+                if (hasVariants && !selectedVariantId) {
+                    // Add error state to all variant groups
+                    variantGroups.forEach(group => {
+                        group.classList.add('variant-group-error');
+                    });
+                    
+                    showToast('Please select a variant before adding to cart', 'error');
+                    
+                    // Scroll to variant section
+                    document.querySelector('.variant-section')?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    return;
+                }
+                
+                // Add to cart
+                addToCart(productId, selectedVariantId);
+            });
         }
-
-        if (wishlistForm) {
-            wishlistForm.addEventListener('submit', async function(e) {
+        
+        // Wishlist button click
+        const wishlistBtn = document.getElementById('wishlist-btn');
+        if (wishlistBtn) {
+            wishlistBtn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                toggleWishlist(productId);
+            });
+        }
+        
+        // Buy now button click
+        const buyNowBtn = document.getElementById('buy-now-btn');
+        if (buyNowBtn) {
+            buyNowBtn.addEventListener('click', function() {
+                // For now, just add to cart and redirect to cart page
+                const productId = addToCartBtn.getAttribute('data-product-id');
+                const variantGroups = document.querySelectorAll('.variant-group');
+                const hasVariants = variantGroups.length > 0;
+                
+                if (hasVariants && !selectedVariantId) {
+                    variantGroups.forEach(group => {
+                        group.classList.add('variant-group-error');
+                    });
+                    
+                    showToast('Please select a variant before buying', 'error');
+                    
+                    document.querySelector('.variant-section')?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    return;
+                }
+                
+                // Add to cart and redirect
+                addToCart(productId, selectedVariantId);
+                setTimeout(() => {
+                    window.location.href = '{% url "cart" %}';
+                }, 1500);
+            });
+        }
+        
+        // Handle review form submission
+        const reviewForm = document.getElementById('review-form');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const button = wishlistForm.querySelector('button');
-                const originalText = button.innerHTML;
-                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
+                
+                const submitBtn = this.querySelector('#submit-review-btn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+                submitBtn.disabled = true;
                 
                 try {
-                    const response = await fetch('/wishlist/add/{{ product.id }}/', {
+                    const formData = new FormData(this);
+                    const response = await fetch(this.action, {
                         method: 'POST',
                         headers: {
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                        }
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
                     });
                     
                     const data = await response.json();
-                    if (data.success) {
-                        showToast('Product added to wishlist!');
-                        button.innerHTML = '❤️ Added to Wishlist';
-                        // Update wishlist count in navbar
-                        document.querySelectorAll('.badge-notification').forEach(el => {
-                            if (el.closest('a[href*="wishlist"]')) {
-                                el.textContent = data.wishlist_count;
-                            }
-                        });
+                    
+                    if (response.ok && data.success) {
+                        showToast('Review submitted successfully!', 'success');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
                     } else {
-                        showToast(data.error || 'Failed to add to wishlist', 'error');
-                        button.innerHTML = originalText;
+                        showToast(data.error || 'Failed to submit review', 'error');
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                     }
                 } catch (error) {
+                    console.error('Error:', error);
                     showToast('Network error. Please try again.', 'error');
-                    button.innerHTML = originalText;
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
                 }
             });
         }
     });
 </script>
 {% endblock %}
-
-
-

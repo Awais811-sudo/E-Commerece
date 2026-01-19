@@ -1,525 +1,1601 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load math_filter %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Filters Sidebar -->
-        <div class="col-md-3 sidebar p-4">
-            <h4 class="mb-4 filter-header">Filters & Sorting</h4>
-            <form method="get" action="{% url 'shop' %}">
-                <!-- Price Filter -->
-                <div class="mb-4">
-                    <label class="form-label filter-label">Price Range</label>
-                    <div class="d-flex gap-2">
-                        <input type="number" class="form-control filter-input" name="price_min" placeholder="Min" value="{{ request.GET.price_min }}">
-                        <input type="number" class="form-control filter-input" name="price_max" placeholder="Max" value="{{ request.GET.price_max }}">
+<div class="container-fluid px-0">
+    <!-- Mobile Filter Toggle Button -->
+    <div class="d-md-none sticky-top bg-white py-3 px-3 border-bottom filter-toggle-bar" style="z-index: 1000;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <button class="btn btn-outline-primary btn-sm me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileFilters">
+                    <i class="bi bi-sliders me-1"></i> Filters
+                    {% if request.GET %}
+                    <span class="badge bg-danger ms-1">{{ request.GET|length }}</span>
+                    {% endif %}
+                </button>
+                <span class="text-muted small">{{ page_obj.paginator.count }} products</span>
+            </div>
+            <div class="d-flex align-items-center">
+                {% if request.GET %}
+                <a href="{% url 'shop' %}" class="btn btn-link btn-sm text-danger">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <!-- Desktop Filters Sidebar -->
+            <div class="col-lg-3 d-none d-lg-block">
+                <div class="filter-sidebar card border-0 shadow-sm sticky-top" style="top: 20px;">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-funnel me-2"></i>Filters
+                            </h5>
+                            {% if request.GET %}
+                            <a href="{% url 'shop' %}" class="btn btn-sm btn-outline-danger">
+                                Clear All
+                            </a>
+                            {% endif %}
+                        </div>
+                        
+                        <form method="get" action="{% url 'shop' %}" id="filterForm">
+                            <!-- Active Filters -->
+                            {% if request.GET %}
+                            <div class="mb-4">
+                                <small class="text-muted d-block mb-2">Active Filters:</small>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for key, value in request.GET.items %}
+                                        {% if key != 'page' and value %}
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 d-flex align-items-center py-2">
+                                            {% if key == 'price_min' %}Min: Rs {{ value }}
+                                            {% elif key == 'price_max' %}Max: Rs {{ value }}
+                                            {% elif key == 'category' %}
+                                                {% for cat in categories %}
+                                                    {% if cat.slug == value %}{{ cat.name }}{% endif %}
+                                                {% endfor %}
+                                            {% elif key == 'brand' %}
+                                                {% for br in brands %}
+                                                    {% if br.slug == value %}{{ br.name }}{% endif %}
+                                                {% endfor %}
+                                            {% elif key == 'sort_by' %}
+                                                {% if value == 'price_low_to_high' %}Price: Low to High
+                                                {% elif value == 'price_high_to_low' %}Price: High to Low
+                                                {% elif value == 'newest_first' %}Newest First
+                                                {% endif %}
+                                            {% endif %}
+                                            <button type="button" class="btn-close btn-close-sm ms-2" onclick="removeFilter('{{ key }}')"></button>
+                                        </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Price Filter -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold mb-3 d-flex justify-content-between">
+                                    <span>Price Range</span>
+                                    <span class="text-muted fs-7" id="priceRangeValue">
+                                        {% if request.GET.price_min or request.GET.price_max %}
+                                        Rs {{ request.GET.price_min|default:"0" }} - Rs {{ request.GET.price_max|default:"∞" }}
+                                        {% endif %}
+                                    </span>
+                                </label>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input type="number" class="form-control form-control-sm" name="price_min" placeholder="Min" 
+                                           value="{{ request.GET.price_min }}" min="0" oninput="updatePriceRange()">
+                                    <span class="text-muted">to</span>
+                                    <input type="number" class="form-control form-control-sm" name="price_max" placeholder="Max" 
+                                           value="{{ request.GET.price_max }}" min="0" oninput="updatePriceRange()">
+                                </div>
+                                <div class="mt-2">
+                                    <input type="range" class="form-range" min="0" max="100000" step="1000" 
+                                           oninput="this.nextElementSibling.value = 'Rs ' + this.value">
+                                    <output class="small text-muted">Slide for quick select</output>
+                                </div>
+                            </div>
+
+                            <!-- Category Filter -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold mb-2">Categories</label>
+                                <div class="category-list">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="category" 
+                                               id="cat_all" value="" {% if not request.GET.category %}checked{% endif %}>
+                                        <label class="form-check-label d-flex justify-content-between w-100" for="cat_all">
+                                            <span>All Categories</span>
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ total_products }}</span>
+                                        </label>
+                                    </div>
+                                    {% for category in categories %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="category" 
+                                               id="cat_{{ category.slug }}" value="{{ category.slug }}"
+                                               {% if request.GET.category == category.slug %}checked{% endif %}>
+                                        <label class="form-check-label" for="cat_{{ category.slug }}">
+                                            {{ category.name }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Brand Filter -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold mb-2">Brands</label>
+                                <div class="brand-list">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="brand" 
+                                               id="brand_all" value="" {% if not request.GET.brand %}checked{% endif %}>
+                                        <label class="form-check-label d-flex justify-content-between w-100" for="brand_all">
+                                            <span>All Brands</span>
+                                        </label>
+                                    </div>
+                                    {% for brand in brands %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="brand" 
+                                               id="brand_{{ brand.slug }}" value="{{ brand.slug }}"
+                                               {% if request.GET.brand == brand.slug %}checked{% endif %}>
+                                        <label class="form-check-label" for="brand_{{ brand.slug }}">
+                                            {{ brand.name }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Sorting Options -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold mb-2">Sort By</label>
+                                <select class="form-select form-select-sm" name="sort_by">
+                                    <option value="">Recommended</option>
+                                    <option value="price_low_to_high" {% if request.GET.sort_by == 'price_low_to_high' %}selected{% endif %}>Price: Low to High</option>
+                                    <option value="price_high_to_low" {% if request.GET.sort_by == 'price_high_to_low' %}selected{% endif %}>Price: High to Low</option>
+                                    <option value="newest_first" {% if request.GET.sort_by == 'newest_first' %}selected{% endif %}>Newest First</option>
+                                </select>
+                            </div>
+
+                            <!-- Apply Button -->
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-check-lg me-2"></i>Apply Filters
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Grid -->
+            <div class="col-lg-9">
+                <!-- Desktop Header -->
+                <div class="d-none d-lg-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="h4 mb-1">Our Collection</h2>
+                        <p class="text-muted small mb-0">
+                            Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} products
+                            {% if request.GET %}
+                            <span class="ms-2">• Filtered</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-grid me-1"></i> View
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item active" href="#" data-view="grid"><i class="bi bi-grid-3x3-gap me-2"></i>Grid View</a></li>
+                                <li><a class="dropdown-item" href="#" data-view="list"><i class="bi bi-list me-2"></i>List View</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Category Filter -->
-                <div class="mb-4">
-                    <label class="form-label filter-label">Category</label>
-                    <select class="form-select filter-select" name="category">
-                        <option value="">All Categories</option>
-                        {% for category in categories %}
-                        <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="mb-4">
-    <label class="form-label filter-label">Brand</label>
-    <select class="form-select filter-select" name="brand">
-        <option value="">All Brands</option>
-        {% for brand in brands %}
-        <option value="{{ brand.slug }}" {% if request.GET.brand == brand.slug %}selected{% endif %}>
-            {{ brand.name }}
-        </option>
-        {% endfor %}
-    </select>
-</div>
-
-                <!-- Sorting Options -->
-                <div class="mb-4">
-                    <label class="form-label filter-label">Sort By</label>
-                    <select class="form-select filter-select" name="sort_by">
-                        <option value="">Default</option>
-                        <option value="price_low_to_high" {% if request.GET.sort_by == 'price_low_to_high' %}selected{% endif %}>Price: Low to High</option>
-                        <option value="price_high_to_low" {% if request.GET.sort_by == 'price_high_to_low' %}selected{% endif %}>Price: High to Low</option>
-                        <option value="newest_first" {% if request.GET.sort_by == 'newest_first' %}selected{% endif %}>Newest First</option>
-                    </select>
-                </div>
-
-                <!-- Apply Button -->
-                <button type="submit" class="btn btn-filter w-100">Apply Filters</button>
-                {% if request.GET %}
-                    <a href="{% url 'shop' %}" class="btn btn-clear w-100 mt-2">Clear All</a>
-                {% endif %}
-            </form>
-        </div>
-
-        <!-- Product Grid -->
-        <div class="col-md-9 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="page-title">Our Products</h2>
-                <div class="results-count">
-                    Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} products
-                </div>
-            </div>
-            
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-                {% for product in page_obj %}
-                <div class="col">
-                    <div class="product-card h-100">
-                        {% if product.discount_price %}
-                        <span class="sale-badge">Save {{ product.discount_percentage }}%</span>
-                        {% endif %}
-
-                        <div class="product-image-container">
-                            <a href="{% url 'product_detail' product.slug %}">
-                                {% if product.images.first %}
-  <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
-{% else %}
-  <img src="{% static 'placeholder.png' %}" alt="No image">
-{% endif %}
-                                <div class="quick-view">Quick View</div>
-                            </a>
-                        </div>
-
-                        <div class="product-details p-3">
-                            <div class="product-category">{{ product.category.name }}</div>
-                            <h5 class="product-title">{{ product.name }}</h5>
-                            <div class="product-rating mb-2">
-                                {% with product.average_rating|floatformat:0 as rating %}
-                                    {% include 'partials/star_rating.html' with rating=product.average_rating %}
-                                {% endwith %}
-                                <span class="text-muted">({{ product.reviews.count }})</span>
-                            </div>
-                            <div class="product-price mb-3">
+                <!-- Product Grid -->
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 g-4" id="productGrid">
+                    {% for product in page_obj %}
+                    <div class="col">
+                        <div class="card product-card h-100 border-0 shadow-sm position-relative">
+                            <!-- Product Badges -->
+                            <div class="position-absolute top-0 start-0 p-2">
                                 {% if product.discount_price %}
-                                <span class="current-price">Rs {{ product.discount_price }}</span>
-                                <span class="original-price">Rs {{ product.price }}</span>
-                                {% else %}
-                                <span class="current-price">Rs {{ product.price }}</span>
+                                <span class="badge bg-danger">Save {{ product.discount_percentage|floatformat:0 }}%</span>
+                                {% endif %}
+                                {% if product.stock <= 10 and product.stock > 0 %}
+                                <span class="badge bg-warning">Low Stock</span>
                                 {% endif %}
                             </div>
-                            <div class="action-buttons">
-                                <form id="add-to-cart-form" method="post" action="{% url 'add_to_cart' product.id %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-add-to-cart w-100">
-                                        <span id="cartText">Add to Cart</span>
+                            
+                            <!-- Wishlist Button -->
+                            <div class="position-absolute top-0 end-0 p-2">
+                                <button class="btn btn-light btn-sm rounded-circle shop-wishlist-btn"
+                                        data-product-id="{{ product.id }}"
+                                        title="{% if product.id in wishlist_product_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
+                                    <i class="bi {% if product.id in wishlist_product_ids %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Product Image -->
+                            <div class="product-image-container" style="height: 200px; overflow: hidden;">
+                                <a href="{% url 'product_detail' product.slug %}">
+                                    {% if product.images.first %}
+                                    <img src="{{ product.images.first.image.url }}" 
+                                         class="card-img-top h-100 w-100 object-fit-contain p-3" 
+                                         alt="{{ product.name }}"
+                                         style="background: #f8f9fa;">
+                                    {% else %}
+                                    <img src="{% static 'placeholder.png' %}" 
+                                         class="card-img-top h-100 w-100 object-fit-contain p-3" 
+                                         alt="No image"
+                                         style="background: #f8f9fa;">
+                                    {% endif %}
+                                </a>
+                            </div>
+                            
+                            <!-- Product Details -->
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title mb-1">
+                                    <a href="{% url 'product_detail' product.slug %}" class="text-decoration-none text-dark">
+                                        {{ product.name|truncatechars:40 }}
+                                    </a>
+                                </h6>
+                                
+                                <div class="product-category small text-muted mb-2">
+                                    {{ product.category.name }}
+                                </div>
+                                
+                                <!-- Rating -->
+                                <div class="mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="star-rating me-2">
+                                            {% include 'partials/star_rating.html' with rating=product.average_rating %}
+                                        </div>
+                                        <small class="text-muted">({{ product.reviews.count }})</small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Price -->
+                                <div class="mt-auto">
+                                    <div class="d-flex align-items-center mb-3">
+                                        {% if product.discount_price %}
+                                        <div>
+                                            <span class="h5 text-dark fw-bold mb-0">Rs {{ product.discount_price|floatformat:0 }}</span>
+                                            <span class="text-decoration-line-through text-muted ms-2">Rs {{ product.price|floatformat:0 }}</span>
+                                        </div>
+                                        {% else %}
+                                        <span class="h5 text-dark fw-bold mb-0">Rs {{ product.price|floatformat:0 }}</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Add to Cart Button -->
+                                    <button class="btn btn-primary w-100 add-to-cart-btn"
+                                            data-product-id="{{ product.id }}"
+                                            {% if product.stock == 0 %}disabled{% endif %}>
+                                        <i class="bi bi-cart me-1"></i>
+                                        {% if product.stock == 0 %}
+                                        Out of Stock
+                                        {% else %}
+                                        Add to Cart
+                                        {% endif %}
                                     </button>
-                                </form>
+                                    
+                                    <!-- Stock Info -->
+                                    {% if product.stock > 0 and product.stock <= 10 %}
+                                    <small class="text-warning d-block mt-1">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Only {{ product.stock }} left!
+                                    </small>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="text-center py-5">
+                            <div class="empty-state-icon mb-3">
+                                <i class="bi bi-search display-1 text-muted"></i>
+                            </div>
+                            <h4 class="text-muted mb-3">No products found</h4>
+                            <p class="text-muted mb-4">Try adjusting your filters or search terms</p>
+                            <a href="{% url 'shop' %}" class="btn btn-primary">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Reset Filters
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
 
-            <!-- Pagination -->
-            <div class="pagination mt-5">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page=1" aria-label="First">
-                                    <span aria-hidden="true">&laquo;&laquo;</span>
-                                </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                        {% endif %}
-                        
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                                <li class="page-item active"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                <!-- Pagination -->
+                {% if page_obj.paginator.num_pages > 1 %}
+                <div class="mt-5">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                                        <i class="bi bi-chevron-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
                             {% endif %}
-                        {% endfor %}
-                        
-                        {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
-                                    <span aria-hidden="true">&raquo;&raquo;</span>
-                                </a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if num == page_obj.number %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                                        <i class="bi bi-chevron-double-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    <div class="text-center text-muted small mt-2">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
+<!-- Mobile Filters Offcanvas -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileFilters" aria-labelledby="mobileFiltersLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="mobileFiltersLabel">
+            <i class="bi bi-sliders me-2"></i>Filters
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="get" action="{% url 'shop' %}" id="mobileFilterForm">
+            <!-- Sorting Options -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold mb-2">Sort By</label>
+                <select class="form-select" name="sort_by">
+                    <option value="">Recommended</option>
+                    <option value="price_low_to_high" {% if request.GET.sort_by == 'price_low_to_high' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_high_to_low" {% if request.GET.sort_by == 'price_high_to_low' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="newest_first" {% if request.GET.sort_by == 'newest_first' %}selected{% endif %}>Newest First</option>
+                </select>
+            </div>
+
+            <!-- Price Filter -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold mb-2">Price Range</label>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <input type="number" class="form-control" name="price_min" placeholder="Min" value="{{ request.GET.price_min }}">
+                    </div>
+                    <div class="col-6">
+                        <input type="number" class="form-control" name="price_max" placeholder="Max" value="{{ request.GET.price_max }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold mb-2">Category</label>
+                <select class="form-select" name="category">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Brand Filter -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold mb-2">Brand</label>
+                <select class="form-select" name="brand">
+                    <option value="">All Brands</option>
+                    {% for brand in brands %}
+                    <option value="{{ brand.slug }}" {% if request.GET.brand == brand.slug %}selected{% endif %}>
+                        {{ brand.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Active Filters -->
+            {% if request.GET %}
+            <div class="mb-4">
+                <label class="form-label fw-semibold mb-2">Active Filters</label>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for key, value in request.GET.items %}
+                        {% if key != 'page' and value %}
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 py-2 px-3">
+                            {% if key == 'price_min' %}Min: Rs {{ value }}
+                            {% elif key == 'price_max' %}Max: Rs {{ value }}
+                            {% elif key == 'sort_by' %}
+                                {% if value == 'price_low_to_high' %}Price: Low to High
+                                {% elif value == 'price_high_to_low' %}Price: High to Low
+                                {% elif value == 'newest_first' %}Newest First
+                                {% endif %}
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                            <button type="button" class="btn-close btn-close-sm ms-2" onclick="removeFilter('{{ key }}')"></button>
+                        </span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="sticky-bottom bg-white pt-3 pb-3 border-top mt-4">
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary" data-bs-dismiss="offcanvas">
+                        <i class="bi bi-check-lg me-2"></i>Apply Filters
+                    </button>
+                    {% if request.GET %}
+                    <a href="{% url 'shop' %}" class="btn btn-outline-danger" data-bs-dismiss="offcanvas">
+                        <i class="bi bi-x-circle me-2"></i>Clear All
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Wishlist data for JavaScript -->
+{{ wishlist_product_ids|json_script:"wishlist-data" }}
+
 <style>
-    :root {
-        --primary-color: #281C91;        /* Modern blue */
-        --secondary-color: #1e40af;      /* Darker blue */
-        --accent-color: #3b82f6;         /* Lighter blue */
-        --text-color: #1f2937;           /* Dark gray */
-        --light-bg: #f9fafb;             /* Very light gray */
-        --dark-bg: #111827;              /* Very dark gray */
-        --success-color: #10b981;        /* Green */
-        --danger-color: #ef4444;         /* Red */
-        --warning-color: #f59e0b;        /* Yellow */
-        --border-radius: 8px;
-        --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --transition: all 0.3s ease;
-    }
-
-    .sidebar {
-        background-color: var(--light-bg);
-        border-right: 1px solid #e5e7eb;
-    }
-
-    .filter-header {
-        color: var(--dark-bg);
-        font-weight: 600;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid var(--primary-color);
-    }
-
-    .filter-label {
-        color: var(--text-color);
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-    }
-
-    .filter-input, .filter-select {
-        border: 1px solid #d1d5db;
-        border-radius: var(--border-radius);
-        padding: 0.5rem 1rem;
-        transition: var(--transition);
-    }
-
-    .filter-input:focus, .filter-select:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .btn-filter {
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
-        border-radius: var(--border-radius);
-        padding: 0.6rem;
-        font-weight: 500;
-        transition: var(--transition);
-    }
-
-    .btn-filter:hover {
-        background-color: var(--secondary-color);
-        transform: translateY(-2px);
-    }
-
-    .btn-clear {
-        background-color: white;
-        color: var(--danger-color);
-        border: 1px solid var(--danger-color);
-        border-radius: var(--border-radius);
-        padding: 0.6rem;
-        font-weight: 500;
-        transition: var(--transition);
-    }
-
-    .btn-clear:hover {
-        background-color: var(--danger-color);
-        color: white;
-    }
-
-    .page-title {
-        color: var(--dark-bg);
-        font-weight: 700;
-        position: relative;
-        padding-bottom: 0.5rem;
-    }
-
-    .page-title:after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 50px;
-        height: 3px;
-        background-color: var(--primary-color);
-    }
-
-    .results-count {
-        color: #6b7280;
-        font-size: 0.9rem;
-    }
-
+    /* Product Card Styling - Responsive Design */
     .product-card {
-    /* Card styling */
-    width: 220px; /* Fixed width */
-    height: 320px; /* Fixed height */
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.product-image-container {
-    /* Container for image */
-    width: 100%;
-    height: 180px; /* Fixed height */
-    position: relative;
-    overflow: hidden;
-    background: #f3f4f6; /* Fallback color */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.product-image {
-    /* Image styling */
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: contain; /* Ensures full image is visible */
-    object-position: center;
-    display: block;
-    margin: auto; /* Additional centering */
-}
-
-    .product-image-container:hover .product-image {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+        background: white;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .product-image-container {
+        position: relative;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .product-image-container img {
+        transition: transform 0.5s ease;
+    }
+    
+    .product-card:hover .product-image-container img {
         transform: scale(1.05);
     }
-
-    .quick-view {
-        position: absolute;
-        bottom: -40px;
-        left: 0;
-        width: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        color: white;
-        text-align: center;
-        padding: 8px 0;
-        transition: var(--transition);
-        opacity: 0;
-    }
-
-    .product-image-container:hover .quick-view {
-        bottom: 0;
-        opacity: 1;
-    }
-
-    .sale-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background-color: var(--danger-color);
-        color: white;
-        padding: 3px 8px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        z-index: 1;
-    }
-
-    .product-details {
-        padding: 1rem;
-    }
-
-    .product-category {
-        color: var(--primary-color);
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        margin-bottom: 0.25rem;
-    }
-
-    .product-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--text-color);
-        margin-bottom: 0.5rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        min-height: 2.5rem;
-        display: -moz-box;
-        display: -ms-flexbox;
-        line-clamp: 2;
-        box-orient: vertical;
-    }
-    .product-rating {
-        margin-bottom: 0.75rem;
+    
+    /* Wishlist Button Styling */
+    .shop-wishlist-btn {
+        width: 36px;
+        height: 36px;
         display: flex;
         align-items: center;
-        gap: 0.25rem;
+        justify-content: center;
+        background: white !important;
+        border: 1px solid #dee2e6 !important;
+        transition: all 0.3s ease;
+        z-index: 10;
     }
-
-    .current-price {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--dark-bg);
+    
+    .shop-wishlist-btn:hover {
+        background: #f8d7da !important;
+        border-color: #f5c6cb !important;
+        transform: scale(1.1);
     }
-
-    .original-price {
-        font-size: 0.9rem;
-        color: #9ca3af;
-        text-decoration: line-through;
-        margin-left: 0.5rem;
+    
+    .shop-wishlist-btn i {
+        font-size: 16px;
+        color: #6c757d;
+        transition: all 0.3s ease;
     }
-
-    .btn-add-to-cart {
-        background-color: white;
-        color: var(--primary-color);
-        border: 1px solid var(--primary-color);
-        border-radius: var(--border-radius);
-        padding: 0.5rem;
-        font-weight: 500;
-        transition: var(--transition);
-        margin-top: 0.5rem;
+    
+    .shop-wishlist-btn i.bi-heart-fill {
+        color: #dc3545;
     }
-
-    .btn-add-to-cart:hover {
-        background-color: var(--primary-color);
-        color: white;
+    
+    .shop-wishlist-btn:hover i {
+        color: #dc3545;
     }
-
-    .pagination {
-        margin-top: 3rem;
+    
+    /* Add to Cart Button States */
+    .add-to-cart-btn {
+        transition: all 0.3s ease;
     }
-
-    .page-item.active .page-link {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
+    
+    .add-to-cart-btn.loading {
+        position: relative;
+        color: transparent !important;
     }
-
-    .page-link {
-        color: var(--primary-color);
-        border: 1px solid #d1d5db;
-        margin: 0 0.25rem;
-        border-radius: var(--border-radius) !important;
+    
+    .add-to-cart-btn.loading::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        top: 50%;
+        left: 50%;
+        margin-top: -10px;
+        margin-left: -10px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
     }
-
-    .page-link:hover {
-        color: var(--secondary-color);
-        background-color: #f3f4f6;
+    
+    .add-to-cart-btn.success {
+        background-color: #198754 !important;
+        border-color: #198754 !important;
     }
-
-    @media (max-width: 768px) {
-        .sidebar {
-            border-right: none;
-            border-bottom: 1px solid #e5e7eb;
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Toast Notification */
+    .shop-toast {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        border-left: 4px solid;
+        animation: slideInRight 0.3s ease;
+    }
+    
+    .shop-toast.success {
+        border-left-color: #198754;
+    }
+    
+    .shop-toast.error {
+        border-left-color: #dc3545;
+    }
+    
+    .shop-toast.info {
+        border-left-color: #0d6efd;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+    
+    /* Badge Animation */
+    @keyframes badgePulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+    
+    .badge-pulse {
+        animation: badgePulse 0.5s ease;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 576px) {
+        .row-cols-sm-2 > .col {
+            padding: 8px;
         }
         
-        .row-cols-md-2 {
-            column-count: 2;
-        }
         .product-card {
-            width: 160px;
-            height: 260px;
+            margin-bottom: 0;
         }
+        
         .product-image-container {
-            height: 140px;
+            height: 150px !important;
+        }
+        
+        .card-title {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .h5 {
+            font-size: 1.1rem;
+        }
+        
+        .btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        .shop-wishlist-btn {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .shop-wishlist-btn i {
+            font-size: 14px;
         }
     }
-   
+    
+    @media (max-width: 768px) {
+        .g-4 {
+            gap: 16px !important;
+        }
+        
+        .product-image-container {
+            height: 180px;
+        }
+    }
+    
+    @media (max-width: 400px) {
+        .row-cols-sm-2 {
+            --bs-columns: 1;
+        }
+        
+        .product-image-container {
+            height: 140px !important;
+        }
+    }
+    
+    @media (min-width: 992px) {
+        .row-cols-lg-3 > .col {
+            flex: 0 0 auto;
+            width: 33.33333333%;
+        }
+    }
+    
+    /* Custom scrollbar for filter sections */
+    .category-list, .brand-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    
+    .category-list::-webkit-scrollbar,
+    .brand-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .category-list::-webkit-scrollbar-track,
+    .brand-list::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    
+    .category-list::-webkit-scrollbar-thumb,
+    .brand-list::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    
+    .category-list::-webkit-scrollbar-thumb:hover,
+    .brand-list::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Product Card Styling - Responsive Design */
+    .product-card {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+        background: white;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .product-image-container {
+        position: relative;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .product-image-container img {
+        transition: transform 0.5s ease;
+    }
+    
+    .product-card:hover .product-image-container img {
+        transform: scale(1.05);
+    }
+    
+    /* Wishlist Button Styling */
+    .shop-wishlist-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white !important;
+        border: 1px solid #dee2e6 !important;
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+    
+    .shop-wishlist-btn:hover {
+        background: #f8d7da !important;
+        border-color: #f5c6cb !important;
+        transform: scale(1.1);
+    }
+    
+    .shop-wishlist-btn i {
+        font-size: 16px;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    
+    .shop-wishlist-btn i.bi-heart-fill {
+        color: #dc3545;
+    }
+    
+    .shop-wishlist-btn:hover i {
+        color: #dc3545;
+    }
+    
+    /* Add to Cart Button Loading States */
+    .add-to-cart-btn {
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .add-to-cart-btn.loading {
+        color: transparent !important;
+    }
+    
+    .add-to-cart-btn.success {
+        background-color: #198754 !important;
+        border-color: #198754 !important;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+    
+    .add-to-cart-btn.loading .loading-spinner {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Toast Notification */
+    .shop-toast {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        border-left: 4px solid;
+        animation: slideInRight 0.3s ease;
+    }
+    
+    .shop-toast.success {
+        border-left-color: #198754;
+    }
+    
+    .shop-toast.error {
+        border-left-color: #dc3545;
+    }
+    
+    .shop-toast.info {
+        border-left-color: #0d6efd;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+    
+    /* Badge Animation */
+    @keyframes badgePulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+    
+    .badge-pulse {
+        animation: badgePulse 0.5s ease;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 576px) {
+        .row-cols-sm-2 > .col {
+            padding: 8px;
+        }
+        
+        .product-card {
+            margin-bottom: 0;
+        }
+        
+        .product-image-container {
+            height: 150px !important;
+        }
+        
+        .card-title {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .h5 {
+            font-size: 1.1rem;
+        }
+        
+        .btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        .shop-wishlist-btn {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .shop-wishlist-btn i {
+            font-size: 14px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .g-4 {
+            gap: 16px !important;
+        }
+        
+        .product-image-container {
+            height: 180px;
+        }
+    }
+    
+    @media (max-width: 400px) {
+        .row-cols-sm-2 {
+            --bs-columns: 1;
+        }
+        
+        .product-image-container {
+            height: 140px !important;
+        }
+    }
+    
+    @media (min-width: 992px) {
+        .row-cols-lg-3 > .col {
+            flex: 0 0 auto;
+            width: 33.33333333%;
+        }
+    }
+    
+    /* Custom scrollbar for filter sections */
+    .category-list, .brand-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    
+    .category-list::-webkit-scrollbar,
+    .brand-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .category-list::-webkit-scrollbar-track,
+    .brand-list::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    
+    .category-list::-webkit-scrollbar-thumb,
+    .brand-list::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    
+    .category-list::-webkit-scrollbar-thumb:hover,
+    .brand-list::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
+
+<!-- Wishlist data for JavaScript -->
+{{ wishlist_product_ids|json_script:"wishlist-data" }}
+
+<style>
+    /* Product Card Styling - Responsive Design */
+    .product-card {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+        background: white;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .product-image-container {
+        position: relative;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .product-image-container img {
+        transition: transform 0.5s ease;
+    }
+    
+    .product-card:hover .product-image-container img {
+        transform: scale(1.05);
+    }
+    
+    /* Wishlist Button Styling */
+    .shop-wishlist-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white !important;
+        border: 1px solid #dee2e6 !important;
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+    
+    .shop-wishlist-btn:hover {
+        background: #f8d7da !important;
+        border-color: #f5c6cb !important;
+        transform: scale(1.1);
+    }
+    
+    .shop-wishlist-btn i {
+        font-size: 16px;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    
+    .shop-wishlist-btn i.bi-heart-fill {
+        color: #dc3545;
+    }
+    
+    .shop-wishlist-btn:hover i {
+        color: #dc3545;
+    }
+    
+    /* Add to Cart Button Loading States */
+    .add-to-cart-btn {
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .add-to-cart-btn.loading {
+        color: transparent !important;
+    }
+    
+    .add-to-cart-btn.success {
+        background-color: #198754 !important;
+        border-color: #198754 !important;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+    
+    .add-to-cart-btn.loading .loading-spinner {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Toast Notification */
+    .shop-toast {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        border-left: 4px solid;
+        animation: slideInRight 0.3s ease;
+    }
+    
+    .shop-toast.success {
+        border-left-color: #198754;
+    }
+    
+    .shop-toast.error {
+        border-left-color: #dc3545;
+    }
+    
+    .shop-toast.info {
+        border-left-color: #0d6efd;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+    
+    /* Badge Animation */
+    @keyframes badgePulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+    
+    .badge-pulse {
+        animation: badgePulse 0.5s ease;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 576px) {
+        .row-cols-sm-2 > .col {
+            padding: 8px;
+        }
+        
+        .product-card {
+            margin-bottom: 0;
+        }
+        
+        .product-image-container {
+            height: 150px !important;
+        }
+        
+        .card-title {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .h5 {
+            font-size: 1.1rem;
+        }
+        
+        .btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        .shop-wishlist-btn {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .shop-wishlist-btn i {
+            font-size: 14px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .g-4 {
+            gap: 16px !important;
+        }
+        
+        .product-image-container {
+            height: 180px;
+        }
+    }
+    
+    @media (max-width: 400px) {
+        .row-cols-sm-2 {
+            --bs-columns: 1;
+        }
+        
+        .product-image-container {
+            height: 140px !important;
+        }
+    }
+    
+    @media (min-width: 992px) {
+        .row-cols-lg-3 > .col {
+            flex: 0 0 auto;
+            width: 33.33333333%;
+        }
+    }
+    
+    /* Custom scrollbar for filter sections */
+    .category-list, .brand-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    
+    .category-list::-webkit-scrollbar,
+    .brand-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .category-list::-webkit-scrollbar-track,
+    .brand-list::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    
+    .category-list::-webkit-scrollbar-thumb,
+    .brand-list::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    
+    .category-list::-webkit-scrollbar-thumb:hover,
+    .brand-list::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
 </style>
 
 <script>
-// Cart and wishlist functionality
     document.addEventListener('DOMContentLoaded', function() {
-        const cartForm = document.getElementById('add-to-cart-form');
-        const wishlistForm = document.getElementById('add-to-wishlist-form');
+        // ==================== SHOP PAGE CART & WISHLIST FUNCTIONALITY ====================
         
-        if (cartForm) {
-            cartForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const button = cartForm.querySelector('button');
-                const originalText = button.innerHTML;
-                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
-                
-                try {
-                    const response = await fetch(cartForm.action, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                        },
-                        body: new FormData(cartForm)
-                    });
-                    
-                    const data = await response.json();
-                    if (data.success) {
-                        showToast('Product added to cart!');
-                        // Update cart count in navbar
-                        document.querySelectorAll('.badge-notification').forEach(el => {
-                            if (el.closest('a[href*="cart"]')) {
-                                el.textContent = data.cart_count;
-                            }
-                        });
+        // Wishlist data
+        let wishlistProductIds = new Set();
+        
+        // Initialize wishlist state from page data
+        function initializeShopWishlistState() {
+            try {
+                const wishlistData = document.getElementById('wishlist-data');
+                if (wishlistData && wishlistData.textContent) {
+                    const initialIds = JSON.parse(wishlistData.textContent);
+                    wishlistProductIds = new Set(initialIds);
+                }
+            } catch (e) {
+                console.error('Could not initialize shop wishlist state:', e);
+            }
+        }
+        
+        // Get CSRF token
+        function getCSRFToken() {
+            const tokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+            return tokenElement ? tokenElement.value : 
+                   document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+        }
+        
+        // Show toast notification
+        function showShopToast(message, type = 'success') {
+            // Remove existing toasts
+            document.querySelectorAll('.shop-toast').forEach(toast => toast.remove());
+            
+            const toast = document.createElement('div');
+            toast.className = `shop-toast ${type}`;
+            toast.innerHTML = `
+                <div class="toast-content p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="toast-icon me-3">
+                            <i class="bi ${type === 'success' ? 'bi-check-circle-fill text-success' : 
+                                           type === 'error' ? 'bi-x-circle-fill text-danger' : 
+                                           'bi-info-circle-fill text-primary'} fs-4"></i>
+                        </div>
+                        <div class="toast-message flex-grow-1">
+                            <div class="fw-medium">${message}</div>
+                            <small class="text-muted">Just now</small>
+                        </div>
+                        <button type="button" class="btn-close ms-3" onclick="this.closest('.shop-toast').remove()"></button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+        
+        // Update all wishlist buttons for a product
+        function updateAllWishlistButtons(productId, isInWishlist) {
+            // Update local state
+            if (isInWishlist) {
+                wishlistProductIds.add(productId);
+            } else {
+                wishlistProductIds.delete(productId);
+            }
+            
+            // Update all wishlist buttons for this product on the page
+            document.querySelectorAll(`.shop-wishlist-btn[data-product-id="${productId}"]`).forEach(button => {
+                const icon = button.querySelector('i');
+                if (icon) {
+                    if (isInWishlist) {
+                        icon.className = 'bi bi-heart-fill text-danger';
+                        button.title = 'Remove from Wishlist';
+                        button.setAttribute('aria-label', 'Remove from Wishlist');
                     } else {
-                        showToast(data.error || 'Failed to add to cart', 'error');
+                        icon.className = 'bi bi-heart';
+                        button.title = 'Add to Wishlist';
+                        button.setAttribute('aria-label', 'Add to Wishlist');
                     }
-                } catch (error) {
-                    showToast('Network error. Please try again.', 'error');
-                } finally {
-                    button.innerHTML = originalText;
+                }
+            });
+            
+            // Update wishlist badge in header
+            const wishlistBadge = document.getElementById('wishlist-badge');
+            if (wishlistBadge) {
+                wishlistBadge.textContent = wishlistProductIds.size;
+                wishlistBadge.classList.add('badge-pulse');
+                setTimeout(() => wishlistBadge.classList.remove('badge-pulse'), 500);
+            }
+        }
+        
+        // Toggle wishlist item - SINGLE FUNCTION
+        async function toggleWishlist(productId, button = null) {
+            // Prevent multiple clicks
+            if (button && button.hasAttribute('data-processing')) return;
+            if (button) {
+                button.setAttribute('data-processing', 'true');
+            }
+            
+            try {
+                const csrftoken = getCSRFToken();
+                
+                const response = await fetch(`/add-to-wishlist/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({}),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update all wishlist buttons for this product
+                    updateAllWishlistButtons(productId, data.action === 'added');
+                    
+                    // Show success message
+                    showShopToast(data.message || `Item ${data.action} wishlist!`, 'success');
+                } else {
+                    showShopToast('Error: ' + (data.error || 'Failed to update wishlist'), 'error');
+                }
+            } catch (error) {
+                console.error('Error toggling wishlist:', error);
+                showShopToast('Failed to update wishlist', 'error');
+            } finally {
+                if (button) {
+                    setTimeout(() => button.removeAttribute('data-processing'), 1000);
+                }
+            }
+        }
+        
+        // Add item to cart - SINGLE FUNCTION
+        async function addToCart(productId, button = null) {
+            // Prevent multiple clicks
+            if (button && button.hasAttribute('data-processing')) return;
+            if (button) {
+                button.setAttribute('data-processing', 'true');
+            }
+            
+            // Save original button state
+            let originalContent = null;
+            if (button) {
+                originalContent = button.innerHTML;
+                button.innerHTML = '<span class="loading-spinner"></span>';
+                button.classList.add('loading');
+                button.disabled = true;
+            }
+            
+            try {
+                const csrftoken = getCSRFToken();
+                
+                const response = await fetch(`/add-to-cart/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({}),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update cart badge in header
+                    const cartBadge = document.getElementById('cart-badge');
+                    if (cartBadge) {
+                        cartBadge.textContent = data.cart_count || 0;
+                        cartBadge.classList.add('badge-pulse');
+                        setTimeout(() => cartBadge.classList.remove('badge-pulse'), 500);
+                    }
+                    
+                    // Show success message
+                    showShopToast(data.message || 'Item added to cart!', 'success');
+                    
+                    // Update button state
+                    if (button) {
+                        button.classList.remove('loading');
+                        button.classList.add('success');
+                        button.innerHTML = '<i class="bi bi-cart-check-fill me-1"></i> Added!';
+                        button.disabled = false;
+                        
+                        // Revert after 2 seconds
+                        setTimeout(() => {
+                            button.classList.remove('success');
+                            button.innerHTML = originalContent;
+                            button.removeAttribute('data-processing');
+                        }, 2000);
+                    }
+                } else {
+                    showShopToast('Error: ' + (data.error || 'Failed to add item'), 'error');
+                    if (button) {
+                        button.classList.remove('loading');
+                        button.innerHTML = originalContent;
+                        button.disabled = false;
+                        button.removeAttribute('data-processing');
+                    }
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                showShopToast('Failed to add item to cart', 'error');
+                if (button) {
+                    button.classList.remove('loading');
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                    button.removeAttribute('data-processing');
+                }
+            }
+        }
+        
+        // Setup event listeners - CLEAN VERSION
+        function setupShopEventListeners() {
+            // Cart buttons - add direct event listeners
+            document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                // Remove any existing click handlers
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+                
+                // Add single click listener
+                newButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const productId = this.dataset.productId;
+                    if (productId && !this.disabled) {
+                        addToCart(productId, this);
+                    }
+                });
+            });
+            
+            // Wishlist buttons - add direct event listeners
+            document.querySelectorAll('.shop-wishlist-btn').forEach(button => {
+                // Remove any existing click handlers
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+                
+                // Add single click listener
+                newButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const productId = this.dataset.productId;
+                    if (productId) {
+                        toggleWishlist(productId, this);
+                    }
+                });
+            });
+        }
+        
+        // ==================== EXISTING SHOP PAGE FUNCTIONALITY ====================
+        
+        // Update price range display
+        function updatePriceRange() {
+            const minPrice = document.querySelector('input[name="price_min"]')?.value || 0;
+            const maxPrice = document.querySelector('input[name="price_max"]')?.value || '∞';
+            const display = document.getElementById('priceRangeValue');
+            if (display) {
+                display.textContent = `Rs ${minPrice} - Rs ${maxPrice}`;
+            }
+        }
+        
+        // Initialize price range display
+        updatePriceRange();
+        
+        // View toggle functionality
+        const viewToggleLinks = document.querySelectorAll('[data-view]');
+        viewToggleLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const view = this.dataset.view;
+                const productGrid = document.getElementById('productGrid');
+                
+                // Update active state
+                viewToggleLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Toggle view classes
+                if (view === 'list') {
+                    productGrid.classList.remove('row-cols-1', 'row-cols-sm-2', 'row-cols-md-3', 'row-cols-lg-3');
+                    productGrid.classList.add('row-cols-1');
+                    document.querySelectorAll('.product-card').forEach(card => {
+                        card.classList.add('list-view');
+                    });
+                } else {
+                    productGrid.classList.remove('row-cols-1');
+                    productGrid.classList.add('row-cols-1', 'row-cols-sm-2', 'row-cols-md-3', 'row-cols-lg-3');
+                    document.querySelectorAll('.product-card').forEach(card => {
+                        card.classList.remove('list-view');
+                    });
+                }
+            });
+        });
+        
+        // Filter form auto-submit on change
+        const filterInputs = document.querySelectorAll('#filterForm select, #filterForm input[type="radio"]');
+        filterInputs.forEach(input => {
+            if (input.type === 'radio') {
+                input.addEventListener('change', function() {
+                    document.getElementById('filterForm').submit();
+                });
+            }
+        });
+        
+        // Remove filter function
+        window.removeFilter = function(filterKey) {
+            const url = new URL(window.location);
+            url.searchParams.delete(filterKey);
+            
+            // Also remove from forms
+            const forms = ['filterForm', 'mobileFilterForm'].map(id => document.getElementById(id)).filter(f => f);
+            forms.forEach(form => {
+                const input = form.querySelector(`[name="${filterKey}"]`);
+                if (input) {
+                    if (input.type === 'radio' || input.type === 'checkbox') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
+                    }
+                }
+            });
+            
+            window.location.href = url.toString();
+        };
+        
+        // Price range slider functionality
+        const priceRange = document.querySelector('.form-range');
+        if (priceRange) {
+            priceRange.addEventListener('input', function() {
+                const minInput = document.querySelector('input[name="price_min"]');
+                if (minInput && !minInput.value) {
+                    minInput.value = this.value;
                 }
             });
         }
-
-        if (wishlistForm) {
-            wishlistForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const button = wishlistForm.querySelector('button');
-                const originalText = button.innerHTML;
-                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
-                
-                try {
-                    const response = await fetch('/wishlist/add/{{ product.id }}/', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    if (data.success) {
-                        showToast('Product added to wishlist!');
-                        button.innerHTML = '❤️ Added to Wishlist';
-                        // Update wishlist count in navbar
-                        document.querySelectorAll('.badge-notification').forEach(el => {
-                            if (el.closest('a[href*="wishlist"]')) {
-                                el.textContent = data.wishlist_count;
-                            }
-                        });
-                    } else {
-                        showToast(data.error || 'Failed to add to wishlist', 'error');
-                        button.innerHTML = originalText;
+        
+        // Image lazy loading
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
                     }
-                } catch (error) {
-                    showToast('Network error. Please try again.', 'error');
-                    button.innerHTML = originalText;
+                    observer.unobserve(img);
                 }
             });
-        }
+        }, {
+            rootMargin: '50px 0px',
+            threshold: 0.1
+        });
+        
+        document.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+        
+        // Initialize cart and wishlist functionality
+        initializeShopWishlistState();
+        setupShopEventListeners();
+        
+        console.log('Shop page with cart/wishlist functionality initialized');
     });
 </script>
 {% endblock %}

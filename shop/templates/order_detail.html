@@ -1,56 +1,808 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container mt-5">
-    <h2 class="mb-4">Order Details</h2>
-    
-    <!-- Order Info -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Order #{{ order.id }}</h5>
-        </div>
-        <div class="card-body">
-            <p><strong>Order Date:</strong> {{ order.date }}</p>
-            <p><strong>Status:</strong> <span class="badge bg-info">{{ order.status }}</span></p>
-            <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
-        </div>
-    </div>
+<style>
+    :root {
+        --primary-dark: #4936A2;
+        --primary-accent: #382d9c;
+        --secondary-dark: #606a7d;
+        --text-light: #f8f9fa;
+        --text-muted: #9ca3af;
+        --bg-light: #fcfdff;
+        --danger: #ef4444;
+        --text-color: #1f2937;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --border-radius: 12px;
+        --border-radius-sm: 8px;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-    <!-- Customer Information -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Shipping Information</h5>
-        </div>
-        <div class="card-body">
-            <p><strong>Name:</strong> {{ order.customer.full_name }}</p>
-            <p><strong>Phone:</strong> {{ order.customer.phone }}</p>
-            <p><strong>Email:</strong> {{ order.customer.email }}</p>
-            <p><strong>Address:</strong> {{ order.customer.street }}, {{ order.customer.city }}, {{ order.customer.state }}, {{ order.customer.postal_code }}, {{ order.customer.country }}</p>
-        </div>
-    </div>
+    .order-detail-page {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        min-height: calc(100vh - 76px);
+        padding: 2rem 0;
+    }
 
-    <!-- Ordered Items -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Ordered Items</h5>
+    .page-header {
+        position: relative;
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        font-size: 2.5rem;
+    }
+
+    .page-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100px;
+        height: 3px;
+        background: linear-gradient(to right, var(--primary-dark), var(--primary-accent));
+        border-radius: 2px;
+    }
+
+    .order-card {
+        border-radius: var(--border-radius);
+        border: none;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+        background: white;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .order-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .order-card .card-header {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-accent));
+        color: white;
+        border: none;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .order-card .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .order-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .order-card .card-footer {
+        background-color: #f8fafc;
+        border-top: 1px solid #e5e7eb;
+        padding: 1rem 1.5rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-item {
+        background: #f8fafc;
+        padding: 1rem;
+        border-radius: var(--border-radius-sm);
+        border-left: 4px solid var(--primary-dark);
+    }
+
+    .info-item label {
+        display: block;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+    }
+
+    .info-item .value {
+        font-size: 1rem;
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    .address-card {
+        background: #f8fafc;
+        border-radius: var(--border-radius-sm);
+        padding: 1.25rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .address-card h6 {
+        color: var(--primary-dark);
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .address-card h6 i {
+        font-size: 1.25rem;
+    }
+
+    .address-card p {
+        margin-bottom: 0.25rem;
+        color: var(--text-color);
+        font-size: 0.95rem;
+    }
+
+    .address-card p:last-child {
+        margin-bottom: 0;
+    }
+
+    .order-items-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: white;
+        border-radius: var(--border-radius-sm);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+
+    .order-items-table thead {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-accent));
+        color: white;
+    }
+
+    .order-items-table th {
+        padding: 1rem;
+        font-weight: 600;
+        text-align: left;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .order-items-table tbody tr {
+        transition: var(--transition);
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .order-items-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .order-items-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .order-items-table td {
+        padding: 1rem;
+        vertical-align: middle;
+        color: var(--text-color);
+    }
+
+    .product-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .product-info img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: var(--border-radius-sm);
+        border: 1px solid #e5e7eb;
+    }
+
+    .product-name {
+        font-weight: 500;
+        color: var(--primary-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .product-variant {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .quantity-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--primary-dark);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .price-cell {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 1.1rem;
+    }
+
+    .total-section {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: var(--border-radius-sm);
+        padding: 1.5rem;
+        margin-top: 2rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .total-row:last-child {
+        border-bottom: none;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-top: 0.5rem;
+    }
+
+    .total-label {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .total-value {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 1rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        gap: 0.5rem;
+    }
+
+    .status-badge i {
+        font-size: 0.75rem;
+    }
+
+    .badge-processing {
+        background: rgba(var(--warning-rgb, 245, 158, 11), 0.1);
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-shipped {
+        background: rgba(var(--info-rgb, 59, 130, 246), 0.1);
+        color: #1e40af;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .badge-delivered {
+        background: rgba(var(--success-rgb, 16, 185, 129), 0.1);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-cancelled {
+        background: rgba(var(--danger-rgb, 239, 68, 68), 0.1);
+        color: #7f1d1d;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-back {
+        background: white;
+        color: var(--primary-dark);
+        border: 2px solid var(--primary-dark);
+        padding: 0.75rem 2rem;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-back:hover {
+        background: var(--primary-dark);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+    }
+
+    .btn-action {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-accent));
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        opacity: 0.9;
+    }
+
+    .icon-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .icon-circle.order {
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+        color: white;
+    }
+
+    .icon-circle.shipping {
+        background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+        color: white;
+    }
+
+    .icon-circle.items {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .order-detail-page {
+            padding: 1rem 0;
+        }
+        
+        .page-header h2 {
+            font-size: 2rem;
+        }
+        
+        .order-card .card-body {
+            padding: 1rem;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .order-items-table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .product-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .product-info img {
+            width: 48px;
+            height: 48px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn-back, .btn-action {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .order-items-table th,
+        .order-items-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .total-section {
+            padding: 1rem;
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+        }
+    }
+</style>
+
+<div class="order-detail-page">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2>Order Details</h2>
+            <p class="text-muted mb-0">Track your order and view all details</p>
         </div>
-        <div class="card-body">
-            <ul class="list-group mb-3">
-                {% for item in order.items.all %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{{ item.product.name }}</strong>
-                        <small class="text-muted d-block">Qty: {{ item.quantity }}</small>
+
+        <!-- Order Info Card -->
+        <div class="order-card">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <div class="icon-circle order">
+                        <i class="bi bi-receipt fs-4"></i>
                     </div>
-                    <span class="text-muted">PKR {{ item.subtotal }}</span>
-                </li>
-                {% endfor %}
-            </ul>
-            <h5 class="text-right"><strong>Total: PKR {{ order.total }}</strong></h5>
+                    <div>
+                        <h5 class="mb-0">Order #{{ order.id }}</h5>
+                        <small class="opacity-75">Placed on {{ order.created_at|date:"F d, Y" }}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Order Status</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-badge badge-{{ order.status }}">
+                                <i class="bi {% if order.status == 'processing' %}bi-hourglass-split
+                                           {% elif order.status == 'shipped' %}bi-truck
+                                           {% elif order.status == 'delivered' %}bi-check-circle
+                                           {% else %}bi-x-circle{% endif %}"></i>
+                                {{ order.status|title }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <label>Payment Method</label>
+                        <div class="value">
+                            <i class="bi bi-credit-card me-2"></i>
+                            {{ order.payment_method|default:"Cash on Delivery" }}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <label>Order Date</label>
+                        <div class="value">
+                            <i class="bi bi-calendar me-2"></i>
+                            {{ order.created_at|date:"F d, Y h:i A" }}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <label>Order Total</label>
+                        <div class="value">
+                            <i class="bi me-1"></i>
+                            PKR {{ order.total|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Information Card -->
+        <div class="order-card">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <div class="icon-circle shipping">
+                        <i class="bi bi-geo-alt fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">Shipping Information</h5>
+                        <small class="opacity-75">Delivery address and contact details</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="address-card">
+                            <h6><i class="bi bi-person-circle"></i>Customer Details</h6>
+                            <div class="mb-4">
+                                <p class="mb-1"><strong>Name:</strong> {{ order.delivery_address.full_name }}</p>
+                                <p class="mb-1"><strong>Phone:</strong> {{ order.delivery_address.phone }}</p>
+                                <p class="mb-0"><strong>Email:</strong> {{ order.delivery_address.email }}</p>
+                            </div>
+                            
+                            <h6><i class="bi bi-house-door"></i>Delivery Address</h6>
+                            <p class="mb-1">{{ order.delivery_address.street }}</p>
+                            <p class="mb-1">{{ order.delivery_address.city }}, {{ order.delivery_address.state }}</p>
+                            <p class="mb-1">{{ order.delivery_address.postal_code }}</p>
+                            <p class="mb-0">{{ order.delivery_address.country }}</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 mt-4 mt-lg-0">
+                        <div class="address-card h-100">
+                            <h6><i class="bi bi-info-circle"></i>Shipping Notes</h6>
+                            <div class="alert alert-info mb-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-truck fs-4 me-3"></i>
+                                    <div>
+                                        <p class="mb-1"><strong>Standard Delivery</strong></p>
+                                        <p class="small mb-0">Estimated delivery: 3-7 business days</p>
+                                        <p class="small mb-0">Contactless delivery available</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ordered Items Card -->
+        <div class="order-card">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <div class="icon-circle items">
+                        <i class="bi bi-cart-check fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">Ordered Items</h5>
+                        <small class="opacity-75">{{ order.items.count }} item(s) in this order</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="order-items-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                            <tr>
+                                <td>
+                                    <div class="product-info">
+                                        {% if item.product.images.first %}
+                                        <img src="{{ item.product.images.first.image.url }}" 
+                                             alt="{{ item.product.name }}"
+                                             onerror="this.src='https://via.placeholder.com/60x60/e5e7eb/6b7280?text=No+Image'">
+                                        {% else %}
+                                        <img src="https://via.placeholder.com/60x60/e5e7eb/6b7280?text=No+Image" 
+                                             alt="No image">
+                                        {% endif %}
+                                        <div>
+                                            <div class="product-name">{{ item.product.name }}</div>
+                                            {% if item.variant %}
+                                            <div class="product-variant">
+                                                <small>
+                                                    Variant: 
+                                                    {% if item.variant.wattage %}{{ item.variant.wattage }}W{% endif %}
+                                                    {% if item.variant.color %}{{ item.variant.color }}{% endif %}
+                                                    {% if item.variant.shape %}{{ item.variant.shape }}{% endif %}
+                                                    {% if item.variant.size %}{{ item.variant.size }}{% endif %}
+                                                </small>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="price-cell">
+                                    PKR {{ item.discounted_price|floatformat:2 }}
+                                    {% if item.discounted_price %}
+                                    <div class="text-danger small">
+                                        <s>PKR {{ item.price|floatformat:2 }}</s>
+                                        <span class="ms-1">PKR {{ item.discounted_price|floatformat:2 }}</span>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="quantity-badge">{{ item.quantity }}</span>
+                                </td>
+                                <td class="price-cell">
+                                    PKR {{ item.get_subtotal|floatformat:2 }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="total-section">
+                    <div class="total-row">
+                        <span class="total-label">Subtotal</span>
+                        <span class="total-value">PKR {{ order.get_subtotal|floatformat:2 }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Shipping Fee</span>
+                        <span class="total-value">PKR {{ order.shipping_fee|default:"0.00"|floatformat:2 }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Tax (if applicable)</span>
+                        <span class="total-value">PKR {{ order.tax|default:"0.00"|floatformat:2 }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Discount</span>
+                        <span class="total-value text-success">- PKR {{ order.discount|default:"0.00"|floatformat:2 }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Grand Total</span>
+                        <span class="total-value">PKR {{ order.total|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-check text-success fs-4"></i>
+                        <div>
+                            <small class="text-muted d-block">Order protected by</small>
+                            <strong>Customer Satisfaction Guarantee</strong>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <a href="{% url 'profile' %}" class="btn btn-back">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Back to Orders
+                        </a>
+                        {% if order.status == 'processing' %}
+                        <button class="btn btn-action" data-bs-toggle="modal" data-bs-target="#contactSupportModal">
+                            <i class="bi bi-headset me-2"></i>
+                            Contact Support
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Timeline (Optional - can be added if you have tracking data) -->
+        <div class="order-card">
+            <div class="card-header">
+                <h5 class="mb-0">Order Timeline</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item {% if order.status == 'delivered' %}active{% endif %}">
+                        <div class="timeline-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Order Delivered</h6>
+                            <p class="text-muted small mb-0">Your order has been delivered</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item {% if order.status in 'shipped,delivered' %}active{% endif %}">
+                        <div class="timeline-icon">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Order Shipped</h6>
+                            <p class="text-muted small mb-0">Your order is on the way</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item active">
+                        <div class="timeline-icon">
+                            <i class="bi bi-cart-check"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Order Confirmed</h6>
+                            <p class="text-muted small mb-0">Order #{{ order.id }} confirmed</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <a href="{% url 'profile' %}" class="btn btn-secondary">Back to Orders</a>
 </div>
+
+<!-- Support Modal -->
+<div class="modal fade" id="contactSupportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Contact Support</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Need help with your order? Our support team is here to assist you.</p>
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-telephone fs-4 me-3"></i>
+                        <div>
+                            <p class="mb-1"><strong>Customer Support</strong></p>
+                            <p class="mb-1">Phone: +92 371 0048010</p>
+                            <p class="mb-0">Email: brandvillage1@gmail.com</p>
+                        </div>
+                    </div>
+                </div>
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-clock me-1"></i>
+                    Support available: Monday - Friday, 9 AM - 6 PM (PKT)
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</button>
+                <a href="mailto:brandvillage1@gmail.com" class="btn btn-primary">
+                    <i class="bi bi-envelope me-2"></i>
+                    Send Email
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Timeline CSS -->
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0.75rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e5e7eb;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .timeline-icon {
+        position: absolute;
+        left: -2rem;
+        top: 0;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 50%;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+    }
+    
+    .timeline-item.active .timeline-icon {
+        background: var(--primary-dark);
+        color: white;
+    }
+    
+    .timeline-content {
+        padding-left: 1rem;
+    }
+    
+    .timeline-content h6 {
+        color: var(--text-color);
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+</style>
 
 {% endblock %}

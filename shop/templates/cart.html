@@ -4,132 +4,353 @@
 {% block content %}
 <div style="display: none;">{% csrf_token %}</div>
 <div class="container mt-4">
-    <h3>Your Cart</h3>
-    {% if cart_items %}
-    <div class="card shadow p-3 mb-4">
-        <div class="row align-items-center">
-            <div class="col-md-12">
-                {% for item in cart_items %}
-                {% with item.product.images.all as product_images %}
-                <div class="d-flex justify-content-between align-items-center border-bottom py-2" 
-                     id="cart-item-{{ item.product.id }}"
-                     data-unit-price="{% if item.variant and item.variant.additional_price is not None %}{{ item.variant.additional_price }}{% elif item.product.discount_price %}{{ item.product.discount_price }}{% else %}{{ item.product.price }}{% endif %}">
-                    <div class="d-flex align-items-center">
-                        <img src="{% if product_images|length %}{{ product_images.0.image.url }}{% else %}{% static 'placeholder.png' %}{% endif %}" 
-                             alt="{{ item.product.name }}" 
-                             class="rounded me-3" 
-                             style="width: 80px; height: 80px; object-fit: contain;">
-                        <div>
-                            <h5 class="mb-1">{{ item.product.name }}</h5>
-                            <p class="mb-0 text-muted">
-                                Rs <span class="item-price">
-                                    {% if item.variant and item.variant.additional_price is not None %}
-                                        {{ item.variant.additional_price }}
-                                    {% elif item.product.discount_price %}
-                                        {{ item.product.discount_price }}
-                                    {% else %}
-                                        {{ item.product.price }}
-                                    {% endif %}
-                                </span>
-                            </p>
-                            {% if item.variant %}
-                            <small class="text-muted">
-                                {% if item.variant.wattage %}{{ item.variant.wattage }}W{% endif %}
-                                {% if item.variant.color %} - {{ item.variant.color }}{% endif %}
-                                {% if item.variant.shape %} - {{ item.variant.shape }}{% endif %}
-                                {% if item.variant.size %} - {{ item.variant.size }}{% endif %}
-                            </small>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <div class="quantity-controls">
-                            <button class="btn btn-sm btn-outline-secondary update-cart" 
-                                    data-action="decrease"
-                                    {% if item.quantity == 1 %}disabled{% endif %}>
-                                -
-                            </button>
-                            <span class="mx-2 item-quantity">{{ item.quantity }}</span>
-                            <button class="btn btn-sm btn-outline-secondary update-cart" 
-                                    data-action="increase">
-                                +
-                            </button>
-                        </div>
-                        <p class="mb-0 ms-4">Rs <span class="item-subtotal">{{ item.subtotal|floatformat:2 }}</span></p>
-                        <button class="btn btn-sm btn-outline-danger ms-3 update-cart" 
-                                data-action="remove">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                {% endwith %}
-                {% endfor %}
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Your Shopping Cart</h2>
+        <div class="text-muted">
+            <i class="fas fa-shopping-cart me-2"></i>
+            <span class="cart-count">{{ cart_items|length }}</span> item{{ cart_items|pluralize }}
         </div>
     </div>
-
-    <div class="text-end">
-        <h4>Total: Rs <span id="cart-total">{{ total|floatformat:2 }}</span></h4>
-        <a href="/checkout/" class="btn btn-primary btn-lg">Checkout</a>
+    
+    {% if cart_items %}
+    <div class="row">
+        <!-- Cart Items Section -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" class="ps-4">Product</th>
+                                    <th scope="col">Price</th>
+                                    <th scope="col" class="text-center">Quantity</th>
+                                    <th scope="col" class="text-end pe-4">Total</th>
+                                    <th scope="col"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in cart_items %}
+                                {% with item.product.images.all as product_images %}
+                                <tr id="cart-item-{{ item.id }}"
+                                    data-product-id="{{ item.product.id }}"
+                                    data-variant-id="{{ item.variant.id|default:'' }}"
+                                    data-unit-price="{% if item.variant and item.variant.additional_price is not None %}{{ item.variant.additional_price }}{% elif item.product.discount_price %}{{ item.product.discount_price }}{% else %}{{ item.product.price }}{% endif %}">
+                                    <!-- Product Column -->
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="position-relative me-3">
+                                                <img src="{% if product_images|length %}{{ product_images.0.image.url }}{% else %}{% static 'placeholder.png' %}{% endif %}" 
+                                                     alt="{{ item.product.name }}" 
+                                                     class="rounded"
+                                                     style="width: 70px; height: 70px; object-fit: contain; background-color: #f8f9fa;">
+                                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                                    {{ item.quantity }}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1 fw-semibold">{{ item.product.name }}</h6>
+                                                {% if item.variant %}
+                                                <div class="variant-badges">
+                                                    {% if item.variant.wattage %}
+                                                    <span class="badge bg-light text-dark me-1">{{ item.variant.wattage }}W</span>
+                                                    {% endif %}
+                                                    {% if item.variant.color %}
+                                                    <span class="badge bg-light text-dark me-1">{{ item.variant.color }}</span>
+                                                    {% endif %}
+                                                    {% if item.variant.shape %}
+                                                    <span class="badge bg-light text-dark me-1">{{ item.variant.shape }}</span>
+                                                    {% endif %}
+                                                    {% if item.variant.size %}
+                                                    <span class="badge bg-light text-dark">{{ item.variant.size }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Price Column -->
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            {% if item.product.discount_price %}
+                                            <span class="text-decoration-line-through text-muted small">
+                                                Rs {{ item.product.price }}
+                                            </span>
+                                            {% endif %}
+                                            <span class="fw-semibold text-primary">
+                                                Rs <span class="item-price">
+                                                    {% if item.variant and item.variant.additional_price is not None %}
+                                                        {{ item.variant.additional_price }}
+                                                    {% elif item.product.discount_price %}
+                                                        {{ item.product.discount_price }}
+                                                    {% else %}
+                                                        {{ item.product.price }}
+                                                    {% endif %}
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Quantity Column -->
+                                    <td class="text-center">
+                                        <div class="d-inline-flex align-items-center border rounded-pill">
+                                            <button class="btn btn-sm btn-link text-decoration-none update-cart px-2" 
+                                                    data-action="decrease"
+                                                    {% if item.quantity == 1 %}disabled{% endif %}>
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+                                            <span class="mx-2 item-quantity fw-semibold">{{ item.quantity }}</span>
+                                            <button class="btn btn-sm btn-link text-decoration-none update-cart px-2" 
+                                                    data-action="increase">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Total Column -->
+                                    <td class="text-end pe-4">
+                                        <span class="fw-bold">Rs <span class="item-subtotal">{{ item.subtotal|floatformat:2 }}</span></span>
+                                    </td>
+                                    
+                                    <!-- Actions Column -->
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger border-0 update-cart" 
+                                                data-action="remove"
+                                                title="Remove item">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endwith %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Continue Shopping Button -->
+            <div class="mt-3">
+                <a href="{% url 'shop' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                </a>
+            </div>
+        </div>
+        
+        <!-- Order Summary Section -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Order Summary</h5>
+                    
+                    <!-- Price Breakdown -->
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Subtotal</span>
+                        <span>Rs {{ total|floatformat:2 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Shipping</span>
+                        <span class="text-success">Calculated at checkout</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tax</span>
+                        <span class="text-success">Included</span>
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <!-- Total -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="mb-0">Total</h5>
+                        <h3 class="mb-0 text-primary">Rs <span id="cart-total">{{ total|floatformat:2 }}</span></h3>
+                    </div>
+                    
+                    <!-- Checkout Button -->
+                    <a href="/checkout/" class="btn btn-primary btn-lg w-100 py-3 mb-3">
+                        <i class="fas fa-lock me-2"></i>Proceed to Checkout
+                    </a>
+                    
+                    <!-- Secure Payment Info -->
+                    <div class="text-center text-muted small">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Secure SSL Encrypted Payment
+                    </div>
+                    
+                    <!-- Accepted Payment Methods -->
+                    <div class="mt-3">
+                        <p class="small text-muted mb-2">We Accept:</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <i class="fab fa-cc-visa fa-2x text-primary"></i>
+                            <i class="fab fa-cc-mastercard fa-2x text-danger"></i>
+                            <i class="fab fa-cc-amex fa-2x text-info"></i>
+                            <i class="fab fa-cc-paypal fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Recommended Products Section -->
-    <hr class="my-4">
-    <h3>Recommended Products</h3>
-    {% if recommended_products %}
-    <div class="row row-cols-2 row-cols-lg-5 g-4">
-        {% for product in recommended_products %}
-        <div class="col">
-            <div class="card h-100 shadow-sm">
-                {% with product.images.all as p_imgs %}
-                <img src="{% if p_imgs|length %}{{ p_imgs.0.image.url }}{% else %}{% static 'placeholder.png' %}{% endif %}" 
-                     class="card-img-top" alt="{{ product.name }}"
-                     style="width: 100%; height: 200px; object-fit: cover;">
-                {% endwith %}
-                <div class="card-body">
-                    <h5 class="card-title">{{ product.name }}</h5>
-                    <p class="card-text">
-                        Price: Rs {{ product.price }}<br>
+    <div class="mt-5 pt-4 border-top">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold">You May Also Like</h3>
+            <a href="{% url 'shop' %}" class="btn btn-link text-decoration-none">
+                View All <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        
+        {% if recommended_products %}
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-3">
+            {% for product in recommended_products %}
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+                    {% with product.images.all as p_imgs %}
+                    <div class="position-relative">
+                        <img src="{% if p_imgs|length %}{{ p_imgs.0.image.url }}{% else %}{% static 'placeholder.png' %}{% endif %}" 
+                             class="card-img-top" alt="{{ product.name }}"
+                             style="width: 100%; height: 180px; object-fit: cover; background-color: #f8f9fa;">
                         {% if product.discount_price %}
-                            <span class="text-danger">Discount: Rs {{ product.discount_price }}</span>
+                        <span class="position-absolute top-0 start-0 m-2 badge bg-danger">Sale</span>
                         {% endif %}
-                    </p>
-                </div>
-                <div class="card-footer text-center">
-                    <a href="{% url 'product_detail' product.slug %}" class="btn btn-primary">View Details</a>
+                    </div>
+                    {% endwith %}
+                    <div class="card-body p-3">
+                        <h6 class="card-title mb-2 text-truncate">{{ product.name }}</h6>
+                        <div class="d-flex align-items-center mb-2">
+                            {% if product.discount_price %}
+                            <span class="fw-bold text-danger me-2">Rs {{ product.discount_price }}</span>
+                            <small class="text-decoration-line-through text-muted">Rs {{ product.price }}</small>
+                            {% else %}
+                            <span class="fw-bold text-primary">Rs {{ product.price }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0 p-3 pt-0">
+                        <a href="{% url 'product_detail' product.slug %}" class="btn btn-outline-primary w-100 btn-sm">
+                            <i class="fas fa-eye me-1"></i> View Details
+                        </a>
+                    </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-gift fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No recommendations available at the moment</p>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <p>No recommended products available.</p>
-    {% endif %}
 
     {% else %}
-    <div class="text-center py-5">
-        <h4>Your cart is empty</h4>
-        <a href="{% url 'shop' %}" class="btn btn-primary mt-3">Continue Shopping</a>
+    <!-- Empty Cart State -->
+    <div class="text-center py-5 my-5">
+        <div class="empty-cart-icon mb-4">
+            <i class="fas fa-shopping-cart fa-4x text-muted"></i>
+        </div>
+        <h4 class="fw-bold mb-3">Your cart is empty</h4>
+        <p class="text-muted mb-4">Looks like you haven't added any items to your cart yet.</p>
+        <a href="{% url 'shop' %}" class="btn btn-primary btn-lg px-5">
+            <i class="fas fa-store me-2"></i>Start Shopping
+        </a>
     </div>
     {% endif %}
 </div>
 
+<!-- Custom CSS -->
+<style>
+.table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 1rem;
+}
+
+.variant-badges .badge {
+    font-size: 0.7rem;
+    padding: 0.25em 0.5em;
+}
+
+.btn-link.disabled {
+    color: #ccc;
+    pointer-events: none;
+}
+
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+.empty-cart-icon {
+    opacity: 0.5;
+}
+
+.sticky-top {
+    position: sticky;
+    z-index: 1;
+}
+.btn-primary {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-accent);
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    async function handleCartAction(productId, action) {
+    async function handleCartAction(cartItemId, productId, variantId, action) {
         try {
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-            const response = await fetch(`/cart/update/${productId}/${action}/`, {
+            
+            // Create form data to send variant_id
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            if (variantId) {
+                formData.append('variant_id', variantId);
+            }
+            
+            // CORRECTED URL: Use /update-cart/ instead of /cart/update/
+            const response = await fetch(`/update-cart/${productId}/${action}/`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': csrfToken,
-                    'Content-Type': 'application/json'
-                }
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData
             });
+            
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Request failed');
             if (!data.success) throw new Error(data.error || 'Action failed');
-            updateCartUI(data, productId);
+            updateCartUI(data, cartItemId, productId);
         } catch (error) {
             console.error('Error:', error);
             showToast(error.message, 'error');
@@ -137,55 +358,160 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function updateCartUI(data, productId) {
-        const itemElement = document.getElementById(`cart-item-${productId}`);
+    function updateCartUI(data, cartItemId, productId) {
+        const itemElement = document.getElementById(`cart-item-${cartItemId}`);
         if (itemElement) {
             const quantityElement = itemElement.querySelector('.item-quantity');
             quantityElement.textContent = data.quantity;
+            
             const subtotalElement = itemElement.querySelector('.item-subtotal');
             subtotalElement.textContent = parseFloat(data.subtotal).toFixed(2);
+            
+            const badgeElement = itemElement.querySelector('.badge');
+            if (badgeElement) {
+                badgeElement.textContent = data.quantity;
+            }
+            
             const decreaseBtn = itemElement.querySelector('[data-action="decrease"]');
             decreaseBtn.disabled = data.quantity <= 1;
+            decreaseBtn.classList.toggle('disabled', data.quantity <= 1);
         }
+        
         const totalElement = document.getElementById('cart-total');
         if (totalElement) {
             totalElement.textContent = parseFloat(data.total).toFixed(2);
         }
-        document.querySelectorAll('.cart-count').forEach(el => {
-            el.textContent = data.cart_count;
-        });
+        
+        // Update cart count in navbar using the global function from base.html
+        if (typeof updateHeaderCounts === 'function') {
+            updateHeaderCounts();
+        } else {
+            // Fallback: update manually
+            const cartBadge = document.getElementById('cart-badge');
+            if (cartBadge) {
+                cartBadge.textContent = data.cart_count;
+                cartBadge.style.transform = 'scale(1.3)';
+                setTimeout(() => {
+                    cartBadge.style.transform = 'scale(1)';
+                }, 300);
+            }
+        }
+        
         if (data.removed) {
-            itemElement.style.opacity = '0';
-            setTimeout(() => {
-                itemElement.remove();
-                if (data.cart_count === 0) {
-                    window.location.reload();
-                }
-            }, 300);
+            const itemElement = document.getElementById(`cart-item-${cartItemId}`);
+            if (itemElement) {
+                itemElement.style.opacity = '0';
+                itemElement.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    itemElement.remove();
+                    if (data.cart_count === 0) {
+                        window.location.reload();
+                    }
+                }, 300);
+            }
         }
     }
 
     document.querySelectorAll('.update-cart').forEach(button => {
         button.addEventListener('click', async function() {
-            const productId = this.closest('[id^="cart-item-"]').id.split('-')[2];
+            const cartItemElement = this.closest('[id^="cart-item-"]');
+            const cartItemId = cartItemElement.id.split('-')[2];
+            const productId = cartItemElement.dataset.productId;
+            const variantId = cartItemElement.dataset.variantId || '';
             const action = this.dataset.action;
-            if (action === 'remove' && !confirm('Remove this item?')) return;
+            
+            if (action === 'remove' && !confirm('Remove this item from your cart?')) return;
+            
             this.disabled = true;
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
             try {
-                await handleCartAction(productId, action);
+                await handleCartAction(cartItemId, productId, variantId, action);
             } finally {
                 this.disabled = false;
+                this.innerHTML = originalHTML;
             }
         });
     });
 
     function showToast(message, type = 'success') {
+        // Create toast notification
         const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
+        toast.className = `position-fixed top-0 end-0 p-3`;
+        toast.style.zIndex = '11';
+        
+        const toastInner = document.createElement('div');
+        toastInner.className = `toast show align-items-center text-bg-${type === 'error' ? 'danger' : 'success'} border-0`;
+        toastInner.setAttribute('role', 'alert');
+        toastInner.setAttribute('aria-live', 'assertive');
+        toastInner.setAttribute('aria-atomic', 'true');
+        
+        toastInner.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="toast-body d-flex align-items-center">
+                    <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        toast.appendChild(toastInner);
         document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
     }
+    
+    // Also add event listener for the remove-from-cart endpoint (alternative method)
+    document.querySelectorAll('.remove-item').forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const itemId = this.dataset.itemId;
+            
+            if (!confirm('Remove this item from your cart?')) return;
+            
+            try {
+                const response = await fetch(`/remove-from-cart/${itemId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Remove the item from the DOM
+                    const itemElement = document.getElementById(`cart-item-${itemId}`);
+                    if (itemElement) {
+                        itemElement.remove();
+                    }
+                    
+                    // Update cart total
+                    const totalElement = document.getElementById('cart-total');
+                    if (totalElement) {
+                        totalElement.textContent = parseFloat(data.total).toFixed(2);
+                    }
+                    
+                    // Update header counts
+                    if (typeof updateHeaderCounts === 'function') {
+                        updateHeaderCounts();
+                    }
+                    
+                    showToast('Item removed from cart', 'success');
+                } else {
+                    showToast('Error: ' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error removing item:', error);
+                showToast('Failed to remove item', 'error');
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

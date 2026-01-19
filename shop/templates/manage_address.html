@@ -1,100 +1,780 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card shadow-lg p-4">
-        <h2 class="mb-4 text-center">{% if object %}Edit{% else %}Add{% endif %} Address</h2>
-        <form method="post">
-            {% csrf_token %}
-
-            <div class="row">
-                <!-- Full Name -->
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="id_full_name">Full Name</label>
-                        <input type="text" name="full_name" id="id_full_name" class="form-control" 
-                            value="{{ form.full_name.value|default:'' }}" placeholder="Enter full name" required>
-                    </div>
+<div class="container-fluid address-page py-5">
+    <div class="container">
+        <!-- Page Header -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="page-header text-center">
+                    <h1 class="display-5 fw-bold text-primary-dark mb-3">
+                        {% if address %}Edit Address{% else %}Add New Address{% endif %}
+                    </h1>
+                    <p class="text-secondary-dark fs-5">
+                        {% if addresses.count >= 3 and not address %}
+                        <span class="text-danger">⚠ Maximum 3 addresses reached. Edit or delete an existing address.</span>
+                        {% else %}
+                        Save addresses for faster checkout (Maximum 3 addresses allowed)
+                        {% endif %}
+                    </p>
                 </div>
+            </div>
+        </div>
 
-                <!-- Phone Number -->
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="id_phone">Phone Number</label>
-                        <input type="text" name="phone" id="id_phone" class="form-control" 
-                            value="{{ form.phone.value|default:'' }}" placeholder="Enter phone number" required>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="address-form-card card border-0 shadow-sm">
+                    <div class="card-header bg-primary-dark text-white border-0">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-geo-alt fs-4 me-3"></i>
+                            <div>
+                                <h4 class="mb-0">Address Details</h4>
+                                <small class="opacity-75">Fill in your shipping information</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-4 p-md-5">
+                        {% if addresses.count >= 3 and not address %}
+                        <div class="alert alert-warning mb-4">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                                <div>
+                                    <h5 class="alert-heading">Address Limit Reached</h5>
+                                    <p class="mb-0">You have reached the maximum limit of 3 saved addresses. Please edit or delete an existing address to add a new one.</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if messages %}
+                        <div class="alert-container mb-4">
+                            {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'error' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <form method="post" id="address-form" class="address-form">
+                            {% csrf_token %}
+                            
+                            {% if form.errors %}
+                            <div class="alert alert-danger mb-4">
+                                <h5 class="alert-heading">Please fix the following errors:</h5>
+                                <ul class="mb-0">
+                                    {% for field, errors in form.errors.items %}
+                                        {% for error in errors %}
+                                            <li>{{ field|title }}: {{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            <!-- Contact Information -->
+                            <div class="form-section mb-5">
+                                <h5 class="section-title text-primary-dark mb-4">
+                                    <i class="bi bi-person me-2"></i>Contact Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" 
+                                                   id="id_full_name" 
+                                                   name="full_name" 
+                                                   value="{% if form.full_name.value %}{{ form.full_name.value }}{% else %}{{ user.get_full_name }}{% endif %}"
+                                                   placeholder="Full Name" 
+                                                   required>
+                                            <label for="id_full_name">Full Name *</label>
+                                            <div class="form-text">As it appears on your ID</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="tel" class="form-control" 
+                                                   id="id_phone" 
+                                                   name="phone" 
+                                                   value="{{ form.phone.value|default:'' }}"
+                                                   placeholder="Phone Number" 
+                                                   required
+                                                   pattern="[0-9]{11}">
+                                            <label for="id_phone">Phone Number *</label>
+                                            <div class="form-text">11-digit mobile number (e.g., 03001234567)</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <input type="email" class="form-control" 
+                                                   id="id_email" 
+                                                   name="email" 
+                                                   value="{% if form.email.value %}{{ form.email.value }}{% else %}{{ user.email }}{% endif %}"
+                                                   placeholder="Email Address">
+                                            <label for="id_email">Email Address *</label>
+                                            <div class="form-text">Contact email (cannot be changed)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Address Details -->
+                            <div class="form-section mb-5">
+                                <h5 class="section-title text-primary-dark mb-4">
+                                    <i class="bi bi-house-door me-2"></i>Address Details
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <textarea class="form-control" 
+                                                      id="id_street" 
+                                                      name="street" 
+                                                      placeholder="Street Address" 
+                                                      style="height: 100px"
+                                                      required>{{ form.street.value|default:'' }}</textarea>
+                                            <label for="id_street">Street Address *</label>
+                                            <div class="form-text">House no., building, street, area</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" 
+                                                   id="id_city" 
+                                                   name="city" 
+                                                   value="{{ form.city.value|default:'' }}"
+                                                   placeholder="City" 
+                                                   required>
+                                            <label for="id_city">City *</label>
+                                            <div class="form-text">e.g., Lahore, Karachi, Islamabad</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" 
+                                                   id="id_state" 
+                                                   name="state" 
+                                                   value="{{ form.state.value|default:'' }}"
+                                                   placeholder="State" 
+                                                   required>
+                                            <label for="id_state">State/Province *</label>
+                                            <div class="form-text">e.g., Punjab, Sindh, KPK</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" 
+                                                   id="id_postal_code" 
+                                                   name="postal_code" 
+                                                   value="{{ form.postal_code.value|default:'' }}"
+                                                   placeholder="Postal Code" 
+                                                   required
+                                                   pattern="[0-9]{5}">
+                                            <label for="id_postal_code">Postal Code *</label>
+                                            <div class="form-text">5-digit Pakistan postal code</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <select class="form-select" 
+                                                    id="id_country" 
+                                                    name="country" 
+                                                    required>
+                                                <option value="">Select Country</option>
+                                                <option value="Pakistan" {% if form.country.value == 'Pakistan' or not form.country.value %}selected{% endif %}>Pakistan</option>
+                                                
+                                            </select>
+                                            <label for="id_country">Country *</label>
+                                            <div class="form-text">Select your country</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Address Type -->
+                            <div class="form-section mb-4">
+                                <h5 class="section-title text-primary-dark mb-4">
+                                    <i class="bi bi-gear me-2"></i>Address Settings
+                                </h5>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="id_is_default" 
+                                           name="is_default" 
+                                           {% if form.is_default.value or not address and addresses.count == 0 %}checked{% endif %}
+                                           {% if address and address.is_default %}onclick="return false;" title="This is your default address. Unchecking will set another address as default."{% endif %}>
+                                    <label class="form-check-label" for="id_is_default">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        Set as default shipping address
+                                    </label>
+                                    <div class="form-text">
+                                        {% if address and address.is_default %}
+                                        <span class="text-primary-dark">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            This is currently your default address. If you uncheck this, another address will be set as default.
+                                        </span>
+                                        {% else %}
+                                        This address will be selected by default during checkout
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="id_is_home" 
+                                           name="is_home" 
+                                           {% if form.is_home.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="id_is_home">
+                                        <i class="bi bi-house me-2"></i>
+                                        This is a home address
+                                    </label>
+                                    <div class="form-text">Helps delivery personnel identify the location</div>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="form-actions mt-5 pt-4 border-top">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <a href="{% url 'profile' %}" class="btn btn-outline-primary-dark w-100 py-3">
+                                            <i class="bi bi-arrow-left me-2"></i>Back to Profile
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button type="submit" 
+                                                class="btn btn-primary-dark w-100 py-3" 
+                                                id="save-address-btn">
+                                            <i class="bi bi-save me-2"></i>
+                                            {% if address %}Update Address{% else %}Save Address{% endif %}
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mt-4">
+                                    <small class="text-muted">
+                                        <i class="bi bi-shield-check me-1"></i>
+                                        Your information is secure and will only be used for shipping purposes
+                                    </small>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
-
-            <div class="row">
-                <!-- Email (Pre-filled for logged-in users) -->
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="id_email">Email</label>
-                        <input type="email" name="email" id="id_email" class="form-control" 
-                            value="{{ user.email }}" readonly>
-                    </div>
-                </div>
-
-                <!-- Street Address -->
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="id_street">Street Address</label>
-                        <input type="text" name="street" id="id_street" class="form-control" 
-                            value="{{ form.street.value|default:'' }}" placeholder="Enter street address" required>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <!-- City -->
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label for="id_city">City</label>
-                        <input type="text" name="city" id="id_city" class="form-control" 
-                            value="{{ form.city.value|default:'' }}" placeholder="Enter city" required>
-                    </div>
-                </div>
-
-                <!-- State -->
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label for="id_state">State</label>
-                        <input type="text" name="state" id="id_state" class="form-control" 
-                            value="{{ form.state.value|default:'' }}" placeholder="Enter state" required>
-                    </div>
-                </div>
-
-                <!-- Postal Code -->
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label for="id_postal_code">Postal Code</label>
-                        <input type="text" name="postal_code" id="id_postal_code" class="form-control" 
-                            value="{{ form.postal_code.value|default:'' }}" placeholder="Enter postal code" required>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Country -->
-            <div class="form-group">
-                <label for="id_country">Country</label>
-                <input type="text" name="country" id="id_country" class="form-control" 
-                    value="{{ form.country.value|default:'' }}" placeholder="Enter country" required>
-            </div>
-
-            <!-- Default Address Checkbox -->
-            <div class="form-check">
-                <input type="checkbox" name="is_default" id="id_is_default" class="form-check-input" 
-                    {% if form.is_default.value %}checked{% endif %}>
-                <label class="form-check-label" for="id_is_default">
-                    Set as default address
-                </label>
-            </div>
-
-            <!-- Save Button -->
-            <button type="submit" class="btn btn-primary btn-block mt-4">Save Address</button>
-        </form>
+        </div>
     </div>
 </div>
+
+<style>
+    :root {
+        --primary-dark: #4936A2;
+        --primary-accent: #382d9c;
+        --secondary-dark: #606a7d;
+        --text-light: #f8f9fa;
+        --text-muted: #9ca3af;
+        --bg-light: #fcfdff;
+        --danger: #ef4444;
+        --text-color: #1f2937;
+        --border-radius: 12px;
+        --border-radius-sm: 8px;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .address-page {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        min-height: calc(100vh - 76px);
+    }
+
+    .page-header {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+
+    .page-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 3px;
+        background: linear-gradient(to right, var(--primary-dark), var(--primary-accent));
+        border-radius: 2px;
+    }
+
+    /* Address Form Card */
+    .address-form-card {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        background: white;
+    }
+
+    .address-form-card .card-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .address-form-card .card-body {
+        padding: 2rem;
+    }
+
+    /* Form Sections */
+    .form-section {
+        padding-bottom: 2rem;
+        border-bottom: 2px solid #f1f5f9;
+    }
+
+    .form-section:last-of-type {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .section-title {
+        position: relative;
+        padding-bottom: 0.75rem;
+    }
+
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 50px;
+        height: 2px;
+        background: var(--primary-dark);
+        border-radius: 1px;
+    }
+
+    /* Form Controls */
+    .address-form .form-floating {
+        margin-bottom: 1.5rem;
+    }
+
+    .address-form .form-control,
+    .address-form .form-select {
+        border-radius: var(--border-radius-sm);
+        padding: 1rem 0.75rem;
+        font-size: 0.95rem;
+        transition: var(--transition);
+    }
+
+    .address-form .form-control:focus,
+    .address-form .form-select:focus {
+        border-color: var(--primary-dark);
+        box-shadow: 0 0 0 3px rgba(73, 54, 162, 0.1);
+    }
+
+    .address-form .form-floating > label {
+        padding: 1rem 0.75rem;
+        color: var(--secondary-dark);
+    }
+
+    .address-form .form-control:focus ~ label,
+    .address-form .form-control:not(:placeholder-shown) ~ label,
+    .address-form .form-select:focus ~ label,
+    .address-form .form-select:not(:placeholder-shown) ~ label {
+        color: var(--primary-dark);
+        transform: scale(0.85) translateY(-1.5rem) translateX(0.15rem);
+        padding: 0 0.5rem;
+    }
+
+    .address-form .form-text {
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        color: var(--text-muted);
+    }
+
+    /* Checkbox Styles */
+    .address-form .form-check {
+        margin-bottom: 1rem;
+        padding-left: 2.5rem;
+    }
+
+    .address-form .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-left: -2.5rem;
+        margin-top: 0.25rem;
+        border: 2px solid #d1d5db;
+        cursor: pointer;
+    }
+
+    .address-form .form-check-input:checked {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+
+    .address-form .form-check-input:disabled {
+        background-color: #e5e7eb;
+        border-color: #d1d5db;
+        cursor: not-allowed;
+    }
+
+    .address-form .form-check-input:focus {
+        box-shadow: 0 0 0 3px rgba(73, 54, 162, 0.1);
+    }
+
+    .address-form .form-check-label {
+        font-weight: 500;
+        color: var(--text-color);
+        cursor: pointer;
+    }
+
+    /* Form Actions */
+    .form-actions .btn {
+        border-radius: var(--border-radius-sm);
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .form-actions .btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+    }
+
+    .btn-primary-dark {
+        background: var(--primary-dark);
+        border-color: var(--primary-dark);
+        color: white;
+    }
+
+    .btn-primary-dark:hover {
+        background: var(--primary-accent);
+        border-color: var(--primary-accent);
+        color: white;
+    }
+
+    .btn-outline-primary-dark {
+        color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+
+    .btn-outline-primary-dark:hover {
+        background: var(--primary-dark);
+        color: white;
+        border-color: var(--primary-dark);
+    }
+
+    .btn-primary-dark:disabled {
+        background: var(--text-muted);
+        border-color: var(--text-muted);
+        cursor: not-allowed;
+    }
+
+    /* Alert Styling */
+    .alert {
+        border-radius: var(--border-radius-sm);
+        border: none;
+    }
+
+    .alert-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #92400e;
+    }
+
+    .alert-danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: #7f1d1d;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .address-form-card .card-body {
+            padding: 1.5rem;
+        }
+        
+        .page-header h1 {
+            font-size: 2rem;
+        }
+        
+        .form-section {
+            padding-bottom: 1.5rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .form-actions .row.g-3 > [class*="col-"] {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .form-check {
+            padding-left: 2rem;
+        }
+        
+        .form-check-input {
+            margin-left: -2rem;
+        }
+    }
+
+    /* Loading Animation */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .loading {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    /* Invalid field styling */
+    .is-invalid {
+        border-color: var(--danger) !important;
+    }
+    
+    .is-invalid:focus {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+    }
+    
+    .invalid-feedback {
+        display: none;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--danger);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const addressForm = document.getElementById('address-form');
+        const saveBtn = document.getElementById('save-address-btn');
+        const isDefaultCheckbox = document.getElementById('id_is_default');
+        
+        // Check if address limit is reached (for new addresses)
+        {'% if addresses.count >= 3 and not address %'}
+        saveBtn.disabled = true;
+        saveBtn.classList.add('disabled');
+        {'% endif %'}
+        
+        // Handle default address checkbox logic
+        if (isDefaultCheckbox) {
+            // If it's a default address being edited, disable unchecking
+            if (isDefaultCheckbox.hasAttribute('onclick')) {
+                isDefaultCheckbox.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showToast('This is your default address. To change it, set another address as default first.', 'info');
+                });
+            }
+            
+            // Show warning when unchecking default for non-default addresses
+            isDefaultCheckbox.addEventListener('change', function() {
+                if (!this.checked && this.hasAttribute('data-was-default')) {
+                    showToast('Unchecking this will remove default status from this address.', 'warning');
+                }
+            });
+        }
+        
+        // Phone number formatting and validation for Pakistan (11 digits)
+        const phoneInput = document.getElementById('id_phone');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                let value = this.value.replace(/\D/g, '');
+                if (value.length > 11) {
+                    value = value.slice(0, 11);
+                }
+                
+                this.value = value;
+            });
+            
+            phoneInput.addEventListener('blur', function() {
+                const cleanValue = this.value.replace(/\D/g, '');
+                if (cleanValue.length !== 11 && cleanValue.length > 0) {
+                    this.classList.add('is-invalid');
+                    showValidationMessage(this, 'Please enter a valid 11-digit Pakistani phone number (e.g., 03001234567)');
+                } else {
+                    this.classList.remove('is-invalid');
+                    hideValidationMessage(this);
+                }
+            });
+        }
+        
+        // Postal code validation (Pakistan postal code - 5 digits)
+        const postalCodeInput = document.getElementById('id_postal_code');
+        if (postalCodeInput) {
+            postalCodeInput.addEventListener('blur', function() {
+                const value = this.value.trim();
+                const pakistanPostalCodeRegex = /^[0-9]{5}$/;
+                
+                if (value && !pakistanPostalCodeRegex.test(value)) {
+                    this.classList.add('is-invalid');
+                    showValidationMessage(this, 'Please enter a valid 5-digit Pakistan postal code');
+                } else {
+                    this.classList.remove('is-invalid');
+                    hideValidationMessage(this);
+                }
+            });
+        }
+        
+        // Real-time form validation
+        const validateForm = () => {
+            let isValid = true;
+            const requiredFields = addressForm.querySelectorAll('[required]');
+            
+            requiredFields.forEach(field => {
+                const isSelect = field.tagName === 'SELECT';
+                const isEmpty = isSelect ? field.value === '' : !field.value.trim();
+                
+                if (isEmpty) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                    showValidationMessage(field, 'This field is required');
+                } else {
+                    field.classList.remove('is-invalid');
+                    hideValidationMessage(field);
+                    
+                    // Additional validations
+                    if (field.id === 'id_phone') {
+                        const cleanValue = field.value.replace(/\D/g, '');
+                        if (cleanValue.length !== 11) {
+                            isValid = false;
+                            field.classList.add('is-invalid');
+                            showValidationMessage(field, 'Please enter a valid 11-digit Pakistani phone number');
+                        }
+                    }
+                    
+                    if (field.id === 'id_postal_code') {
+                        const pakistanPostalCodeRegex = /^[0-9]{5}$/;
+                        if (!pakistanPostalCodeRegex.test(field.value)) {
+                            isValid = false;
+                            field.classList.add('is-invalid');
+                            showValidationMessage(field, 'Please enter a valid 5-digit Pakistan postal code');
+                        }
+                    }
+                    
+                    if (field.type === 'email') {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(field.value)) {
+                            isValid = false;
+                            field.classList.add('is-invalid');
+                            showValidationMessage(field, 'Please enter a valid email address');
+                        }
+                    }
+                }
+            });
+            
+            return isValid;
+        };
+        
+        // Helper functions for validation messages
+        function showValidationMessage(field, message) {
+            let feedback = field.nextElementSibling?.nextElementSibling;
+            if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                feedback = field.parentElement.querySelector('.invalid-feedback');
+                if (!feedback) {
+                    feedback = document.createElement('div');
+                    feedback.className = 'invalid-feedback';
+                    field.parentElement.appendChild(feedback);
+                }
+            }
+            feedback.textContent = message;
+            feedback.style.display = 'block';
+        }
+        
+        function hideValidationMessage(field) {
+            const feedback = field.parentElement.querySelector('.invalid-feedback');
+            if (feedback) {
+                feedback.style.display = 'none';
+            }
+        }
+        
+        // Validate on blur
+        addressForm.querySelectorAll('[required]').forEach(field => {
+            field.addEventListener('blur', validateForm);
+            field.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                    hideValidationMessage(this);
+                }
+            });
+        });
+        
+        // Form submission
+        addressForm.addEventListener('submit', function(e) {
+            // Check if address limit reached (for new addresses)
+            {'% if addresses.count >= 3 and not address %'}
+            e.preventDefault();
+            e.stopPropagation();
+            showToast('You have reached the maximum limit of 3 addresses. Please edit or delete an existing address.', 'error');
+            return false;
+            {'% endif %'}
+            
+            if (!validateForm()) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Scroll to first invalid field
+                const firstInvalid = addressForm.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    firstInvalid.focus();
+                }
+                
+                showToast('Please fix the errors in the form before submitting.', 'error');
+                return false;
+            }
+            
+            // Disable button and show loading
+            saveBtn.disabled = true;
+            saveBtn.classList.add('loading');
+            saveBtn.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                {% if address %}Updating Address...{% else %}Saving Address...{% endif %}
+            `;
+            
+            return true;
+        });
+        
+        // Toast notification function
+        function showToast(message, type = 'error') {
+            // Remove existing toasts
+            document.querySelectorAll('.address-toast').forEach(toast => toast.remove());
+            
+            const toast = document.createElement('div');
+            toast.className = `address-toast alert alert-${type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'success'} alert-dismissible fade show position-fixed`;
+            toast.style.cssText = `
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: var(--shadow-lg);
+                border-radius: var(--border-radius-sm);
+            `;
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi ${type === 'error' ? 'bi-exclamation-triangle-fill' : type === 'warning' ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'} me-2 fs-5"></i>
+                    <div class="flex-grow-1">${message}</div>
+                    <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+        
+        // Initialize country select with Pakistan as default if not already selected
+        const countrySelect = document.getElementById('id_country');
+        if (countrySelect && !countrySelect.value) {
+            countrySelect.value = 'Pakistan';
+        }
+    });
+</script>
 {% endblock %}

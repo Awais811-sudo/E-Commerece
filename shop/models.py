@@ -8,6 +8,7 @@ from django.conf import settings
 import uuid
 from django.db.models import Count, Q, F, ExpressionWrapper, IntegerField, Avg
 from django.core.exceptions import ValidationError
+from decimal import Decimal
 
 User = settings.AUTH_USER_MODEL 
 
@@ -70,6 +71,31 @@ class Order(models.Model):
     def __str__(self):
         return f"Order #{self.id} - {self.get_status_display()}"
     
+    # NO custom save() method!
+    
+    def calculate_total(self):
+        """Calculate total based on all order items"""
+        total = Decimal('0')
+        for item in self.items.all():
+            total += item.get_cost()
+        self.total = total
+        return total
+    
+    @property
+    def final_total(self):
+        """Property to get the total (calculated dynamically)"""
+        total = Decimal('0')
+        for item in self.items.all():
+            # Safe way to get cost
+            if hasattr(item, 'get_cost'):
+                total += item.get_cost()
+            else:
+                # Fallback calculation
+                if item.discounted_price:
+                    total += item.discounted_price * item.quantity
+                else:
+                    total += item.price * item.quantity
+        return total  
 
     
 
@@ -257,8 +283,42 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, related_name='order_items', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2)  # Original price at time of order
+    discounted_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Add this
     variant = models.ForeignKey(ProductVariant, on_delete=models.PROTECT, null=True, blank=True)
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+    
+    def calculate_total(self):
+        """Calculate total based on all order items and update the total field"""
+        total = Decimal('0')
+        for item in self.items.all():
+            total += item.get_cost()
+        self.total = total
+        return total
+    
+    def update_total(self):
+        """Update the total and save"""
+        self.calculate_total()
+        self.save()
+    
+    def get_cost(self):
+        """Calculate total cost for this order item"""
+        # Use discounted_price if available, otherwise use regular price
+        if self.discounted_price:
+            return self.discounted_price * self.quantity
+        return self.price * self.quantity
+    
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name}"
+
+    @property
+    def final_total(self):
+        """Property to get the total (calculated dynamically)"""
+        return sum(item.get_cost() for item in self.items.all())
+    
+
 
 class Review(models.Model):
     product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
@@ -271,6 +331,9 @@ class Review(models.Model):
     class Meta:
         ordering = ['-created_at']
         unique_together = ['product', 'user'] 
+
+    def __str__(self):
+        return f"{self.user.username}'s review for {self.product.name}"
 
  # or use get_user_model() if preferred
 

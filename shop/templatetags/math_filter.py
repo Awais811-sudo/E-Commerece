@@ -10,17 +10,21 @@
 
 # print("Custom filter 'subtract' registered successfully!")  # Debug statement
 
+
 from django import template
 
 register = template.Library()
 
 @register.filter
 def subtract(value, arg):
-    """Subtracts the given argument from the value."""
+    """Subtract the arg from the value."""
     try:
-        return int(value) - int(arg)
+        return float(value) - float(arg)
     except (ValueError, TypeError):
-        return value  # Return the original value if conversion fails
+        try:
+            return value - arg
+        except Exception:
+            return '' # Return the original value if conversion fails
     
 
 @register.filter(name='float')
@@ -31,4 +35,11 @@ def float_filter(value):
     try:
         return float(value)
     except (ValueError, TypeError):
+        return value
+
+@register.filter
+def mul(value, arg):
+    try:
+        return float(value) * float(arg)
+    except:
         return value

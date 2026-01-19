@@ -24,7 +24,7 @@ class OrderItemInline(admin.TabularInline):
     def subtotal_display(self, obj):
         if obj.price is None or obj.quantity is None:
             return "N/A"
-        return obj.price * obj.quantity
+        return obj.discount_price * obj.quantity
     subtotal_display.short_description = "Subtotal"
 
 

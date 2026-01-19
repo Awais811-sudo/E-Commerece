@@ -1,0 +1,748 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-dark: #4936A2;
+        --primary-accent: #382d9c;
+        --secondary-dark: #606a7d;
+        --text-light: #f8f9fa;
+        --text-muted: #9ca3af;
+        --bg-light: #fcfdff;
+        --danger: #ef4444;
+        --text-color: #1f2937;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --border-radius: 12px;
+        --border-radius-sm: 8px;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .profile-page {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        min-height: calc(100vh - 76px);
+        padding: 3rem 0;
+    }
+
+    .hero-section {
+        position: relative;
+        overflow: hidden;
+        border-radius: var(--border-radius);
+        margin-bottom: 3rem;
+    }
+
+    .hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-accent));
+        opacity: 0.9;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        padding: 4rem 2rem;
+        text-align: center;
+        color: white;
+    }
+
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 4px solid white;
+        margin: 0 auto 1.5rem;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .profile-avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-size: 3rem;
+        font-weight: bold;
+    }
+
+    .hero-content h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-content .title {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        margin-bottom: 1.5rem;
+    }
+
+    .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .social-link {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-decoration: none;
+        transition: var(--transition);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .social-link:hover {
+        background: white;
+        color: var(--primary-dark);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .section-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        transition: var(--transition);
+    }
+
+    .section-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(73, 54, 162, 0.1);
+    }
+
+    .section-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: var(--border-radius-sm);
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-accent));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .section-header h2 {
+        color: var(--primary-dark);
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.75rem;
+    }
+
+    .skills-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .skill-category {
+        background: var(--bg-light);
+        border-radius: var(--border-radius-sm);
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .skill-category h3 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .skill-category h3 i {
+        color: var(--primary-accent);
+    }
+
+    .skill-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .skill-list li {
+        padding: 0.5rem 0;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .skill-list li i {
+        color: var(--success);
+        font-size: 0.875rem;
+    }
+
+    .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .project-card {
+        background: var(--bg-light);
+        border-radius: var(--border-radius-sm);
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        transition: var(--transition);
+    }
+
+    .project-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .project-image {
+        height: 200px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .project-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: var(--transition);
+    }
+
+    .project-card:hover .project-image img {
+        transform: scale(1.05);
+    }
+
+    .project-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--primary-dark);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .project-content {
+        padding: 1.5rem;
+    }
+
+    .project-content h3 {
+        color: var(--primary-dark);
+        margin-bottom: 0.75rem;
+        font-size: 1.25rem;
+    }
+
+    .project-content p {
+        color: var(--secondary-dark);
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .project-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1rem 0;
+    }
+
+    .project-features li {
+        padding: 0.25rem 0;
+        color: var(--text-color);
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .project-features li i {
+        color: var(--success);
+        font-size: 0.75rem;
+    }
+
+    .tech-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .tech-tag {
+        background: rgba(73, 54, 162, 0.1);
+        color: var(--primary-dark);
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .summary-section {
+        text-align: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(73, 54, 162, 0.05), rgba(56, 45, 156, 0.05));
+        border-radius: var(--border-radius-sm);
+        border: 1px solid rgba(73, 54, 162, 0.1);
+    }
+
+    .summary-section h3 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+
+    .summary-section p {
+        color: var(--secondary-dark);
+        font-size: 1.1rem;
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .contact-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .contact-card {
+        background: var(--bg-light);
+        border-radius: var(--border-radius-sm);
+        padding: 1.5rem;
+        text-align: center;
+        border: 1px solid #e5e7eb;
+        transition: var(--transition);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .contact-card:hover {
+        background: white;
+        transform: translateY(-3px);
+        box-shadow: var(--shadow);
+        border-color: var(--primary-dark);
+    }
+
+    .contact-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-accent));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .contact-card h3 {
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .contact-card p {
+        color: var(--secondary-dark);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 768px) {
+        .profile-page {
+            padding: 1.5rem 0;
+        }
+        
+        .hero-content {
+            padding: 2rem 1rem;
+        }
+        
+        .hero-content h1 {
+            font-size: 2rem;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+        }
+        
+        .section-card {
+            padding: 1.5rem;
+        }
+        
+        .skills-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .projects-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .contact-cards {
+            grid-template-columns: 1fr;
+        }
+        
+        .section-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 0.75rem;
+        }
+        
+        .section-header h2 {
+            font-size: 1.5rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .hero-content h1 {
+            font-size: 1.75rem;
+        }
+        
+        .title {
+            font-size: 1.1rem;
+        }
+        
+        .social-links {
+            flex-wrap: wrap;
+        }
+        
+        .project-image {
+            height: 160px;
+        }
+    }
+
+    /* Animation for skill icons */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .skill-category {
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .skill-category:nth-child(1) { animation-delay: 0.1s; }
+    .skill-category:nth-child(2) { animation-delay: 0.2s; }
+    .skill-category:nth-child(3) { animation-delay: 0.3s; }
+    .skill-category:nth-child(4) { animation-delay: 0.4s; }
+</style>
+
+<div class="profile-page">
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-bg"></div>
+            <div class="hero-content">
+                <div class="profile-avatar">
+                    <div class="profile-avatar-placeholder">
+                        A
+                    </div>
+                </div>
+                <h1>Awais Arshad</h1>
+                <p class="title">Full-Stack Web Developer & AI Enthusiast</p>
+                <p>I build modern web applications with powerful backend logic and sleek front-end interfaces. I focus on clean architecture, high performance, automation, and smooth user experiences.</p>
+                
+                <div class="social-links">
+                    <a href="mailto:awais.arshad.030955@gmail.com" class="social-link" title="Email">
+                        <i class="bi bi-envelope-fill"></i>
+                    </a>
+                    <a href="https://github.com/Awais811-sudo" class="social-link" title="GitHub" target="_blank">
+                        <i class="bi bi-github"></i>
+                    </a>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills Section -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <h2>💼 Skills & Expertise</h2>
+            </div>
+            
+            <div class="skills-grid">
+                <!-- Frontend Skills -->
+                <div class="skill-category">
+                    <h3><i class="bi bi-palette"></i> Frontend</h3>
+                    <ul class="skill-list">
+                        <li><i class="bi bi-check-circle-fill"></i> HTML5, CSS3, JavaScript</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Responsive Web Design</li>
+                        <li><i class="bi bi-check-circle-fill"></i> TailwindCSS / Bootstrap</li>
+                        <li><i class="bi bi-check-circle-fill"></i> React (Basic to Intermediate)</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Modern UI/UX Principles</li>
+                    </ul>
+                </div>
+                
+                <!-- Backend Skills -->
+                <div class="skill-category">
+                    <h3><i class="bi bi-server"></i> Backend</h3>
+                    <ul class="skill-list">
+                        <li><i class="bi bi-check-circle-fill"></i> Python & Django (Expert)</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Django REST Framework (APIs)</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Real-time Systems</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Authentication & Authorization</li>
+                        <li><i class="bi bi-check-circle-fill"></i> PostgreSQL / MySQL</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Role-Based Access Control</li>
+                    </ul>
+                </div>
+                
+                <!-- AI / Automation -->
+                <div class="skill-category">
+                    <h3><i class="bi bi-cpu"></i> AI / Automation</h3>
+                    <ul class="skill-list">
+                        <li><i class="bi bi-check-circle-fill"></i> OpenCV, YOLO (Vehicle detection)</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Image Processing</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Basic Machine Learning algorithms</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Data Preprocessing</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Model Integration into Web Apps</li>
+                    </ul>
+                </div>
+                
+                <!-- E-commerce & Other -->
+                <div class="skill-category">
+                    <h3><i class="bi bi-cart"></i> E-commerce & Other</h3>
+                    <ul class="skill-list">
+                        <li><i class="bi bi-check-circle-fill"></i> Stripe API (Payments & Memberships)</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Cart Logic & Checkout Systems</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Analytics Dashboards</li>
+                        <li><i class="bi bi-check-circle-fill"></i> SEO & Social Media Marketing</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Deployment (Render, Railway, VPS)</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Git / GitHub</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Section -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <h2>🛠️ Featured Projects</h2>
+            </div>
+            
+            <div class="projects-grid">
+                <!-- Project 1: BikeSecure -->
+                <div class="project-card">
+                    <div class="project-image">
+                        <div class="project-badge">AI Powered</div>
+                        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="BikeSecure">
+                    </div>
+                    <div class="project-content">
+                        <h3>BikeSecure – AI-Powered Smart Bike Parking</h3>
+                        <p>A complete parking automation solution with AI-powered slot detection and management system.</p>
+                        
+                        <ul class="project-features">
+                            <li><i class="bi bi-check-circle-fill"></i> Real-time slot detection using YOLO & OpenCV</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Entry/Exit APIs with QR verification</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Pre-booking system with percentage rules</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Role-based admin panel (Admin + Staff)</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Insights dashboard with analytics</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Digital payments integration</li>
+                        </ul>
+                        
+                        <div class="tech-stack">
+                            <span class="tech-tag">Django</span>
+                            <span class="tech-tag">OpenCV</span>
+                            <span class="tech-tag">YOLO</span>
+                            <span class="tech-tag">REST API</span>
+                            <span class="tech-tag">PostgreSQL</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project 2: NewGate E-commerce -->
+                <div class="project-card">
+                    <div class="project-image">
+                        <div class="project-badge">Full Stack</div>
+                        <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="NewGate E-commerce">
+                    </div>
+                    <div class="project-content">
+                        <h3>BrandVillage – E-commerce Web Application</h3>
+                        <p>A complete e-commerce system with modern features and Shopify-style analytics dashboard.</p>
+                        
+                        <ul class="project-features">
+                            <li><i class="bi bi-check-circle-fill"></i> Product listings with categories & filters</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Wishlist & cart functionality</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Coupon & discount system</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Complete checkout & order management</li>
+                            <li><i class="bi bi-check-circle-fill"></i> User profiles & address management</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Advanced analytics dashboard</li>
+                        </ul>
+                        
+                        <div class="tech-stack">
+                            <span class="tech-tag">Django</span>
+                            <span class="tech-tag">PostgreSQL</span>
+                            <span class="tech-tag">JavaScript</span>
+                            <span class="tech-tag">Bootstrap</span>
+                            <span class="tech-tag">Stripe API</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project 3: Social Media / SEO -->
+                <div class="project-card">
+                    <div class="project-image">
+                        <div class="project-badge">Marketing</div>
+                        <img src="https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Social Media SEO">
+                    </div>
+                    <div class="project-content">
+                        <h3>Social Media & SEO Projects</h3>
+                        <p>Managed digital marketing campaigns and SEO optimization for multiple businesses.</p>
+                        
+                        <ul class="project-features">
+                            <li><i class="bi bi-check-circle-fill"></i> Social media marketing campaigns</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Search engine optimization (SEO)</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Shopify store optimization</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Product listing optimization</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Ranking & visibility improvement</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Traffic & conversion analysis</li>
+                        </ul>
+                        
+                        <div class="tech-stack">
+                            <span class="tech-tag">SEO</span>
+                            <span class="tech-tag">Social Media</span>
+                            <span class="tech-tag">Analytics</span>
+                            <span class="tech-tag">Shopify</span>
+                            <span class="tech-tag">Marketing</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="section-card">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="bi bi-chat-dots"></i>
+                </div>
+                <h2>📫 Contact & Connect</h2>
+            </div>
+            
+            <div class="contact-cards">
+                <a href="mailto:awais.arshad.030955@gmail.com" class="contact-card">
+                    <div class="contact-icon">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <h3>Email</h3>
+                    <p>awais.arshad.030955@gmail.com</p>
+                    <small class="text-muted">Available for inquiries</small>
+                </a>
+                
+                <a href="https://github.com/Awais811-sudo" class="contact-card" target="_blank">
+                    <div class="contact-icon">
+                        <i class="bi bi-github"></i>
+                    </div>
+                    <h3>GitHub</h3>
+                    <p>github.com/Awais811-sudo</p>
+                    <small class="text-muted">View my projects & code</small>
+                </a>
+                
+                
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="section-card">
+            <div class="summary-section">
+                <h3>🎯 Summary</h3>
+                <p>
+                    I build real-world applications with strong backend logic, scalable APIs, and modern UI. 
+                    My focus is on creating solutions that are not only functional but also efficient, maintainable, 
+                    and provide exceptional user experiences. Always learning, always improving, and always ready 
+                    for the next challenge.
+                </p>
+                <p class="mt-3">
+                    <strong>Let's build something amazing together!</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animated');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all section cards
+        document.querySelectorAll('.section-card').forEach(card => {
+            observer.observe(card);
+        });
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

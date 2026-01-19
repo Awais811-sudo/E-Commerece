@@ -1,0 +1,101 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Product List{% endblock %}
+{% block page_title %}Products{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow rounded-lg p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">All Products</h3>
+        <a href="{% url 'product_create' %}" 
+           class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">
+           <i class="fas fa-plus mr-2"></i>Add Product
+        </a>
+    </div>
+
+    <!-- Product grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for product in products %}
+        <div class="bg-gray-50 border rounded-xl shadow-sm hover:shadow-lg transition p-4 relative">
+            <!-- Featured badge -->
+            {% if product.featured %}
+                <span class="absolute top-2 left-2 bg-yellow-400 text-white text-xs px-2 py-1 rounded-full">Featured</span>
+            {% endif %}
+
+            <!-- Product Image -->
+            <div class="h-40 flex items-center justify-center mb-4">
+                {% with main_image=product.images.filter(is_main=True).first %}
+                    {% if main_image %}
+                        <img src="{{ main_image.image.url }}" alt="{{ main_image.alt_text|default:product.name }}" 
+                             class="max-h-full max-w-full rounded-md object-contain">
+                    {% else %}
+                        <img src="https://via.placeholder.com/150" alt="{{ product.name }}" 
+                             class="max-h-full max-w-full rounded-md object-contain">
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Product Info -->
+            <h4 class="text-md font-semibold text-gray-800 truncate">{{ product.name }}</h4>
+            <p class="text-sm text-gray-500 mb-2">{{ product.category.name }}{% if product.brand %} • {{ product.brand.name }}{% endif %}</p>
+
+            <!-- Price -->
+            <div class="mb-2">
+                {% if product.discount_price %}
+                    <span class="text-lg font-bold text-red-600">${{ product.discount_price }}</span>
+                    <span class="line-through text-gray-400 ml-2">${{ product.price }}</span>
+                    <span class="ml-2 text-green-600 text-xs">-{{ product.discount_percentage }}%</span>
+                {% else %}
+                    <span class="text-lg font-bold text-gray-800">${{ product.price }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Stock -->
+            {% if product.stock > 0 %}
+                <span class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">In Stock ({{ product.stock }})</span>
+            {% else %}
+                <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">Out of Stock</span>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="flex justify-between mt-4">
+                <a href="{% url 'product_detail' product.slug %}" class="text-blue-600 hover:text-blue-800 text-sm">
+                    <i class="fas fa-eye mr-1"></i> View
+                </a>
+                <a href="{% url 'product_edit' product.id %}" class="text-yellow-600 hover:text-yellow-800 text-sm">
+                    <i class="fas fa-edit mr-1"></i> Edit
+                </a>
+                <a href="{% url 'product_delete' product.id %}" class="text-red-600 hover:text-red-800 text-sm">
+                    <i class="fas fa-trash mr-1"></i> Delete
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <p class="col-span-full text-center text-gray-500">No products available.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-6">
+        {% if is_paginated %}
+            <div class="flex justify-center space-x-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border rounded hover:bg-gray-100">&laquo;</a>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="px-3 py-1 bg-blue-600 text-white rounded">{{ num }}</span>
+                    {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                        <a href="?page={{ num }}" class="px-3 py-1 border rounded hover:bg-gray-100">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border rounded hover:bg-gray-100">&raquo;</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
