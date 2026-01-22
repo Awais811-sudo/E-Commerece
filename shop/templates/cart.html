@@ -14,10 +14,12 @@
     
     {% if cart_items %}
     <div class="row">
-        <!-- Cart Items Section -->
-        <div class="col-lg-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-0">
+    <!-- Cart Items Section -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <!-- Desktop Table View -->
+                <div class="d-none d-lg-block">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
@@ -44,7 +46,7 @@
                                                      alt="{{ item.product.name }}" 
                                                      class="rounded"
                                                      style="width: 70px; height: 70px; object-fit: contain; background-color: #f8f9fa;">
-                                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary cart-item-badge" data-item-id="{{ item.id }}">
                                                     {{ item.quantity }}
                                                 </span>
                                             </div>
@@ -79,7 +81,7 @@
                                             </span>
                                             {% endif %}
                                             <span class="fw-semibold text-primary">
-                                                Rs <span class="item-price">
+                                                Rs <span class="item-price" data-item-id="{{ item.id }}">
                                                     {% if item.variant and item.variant.additional_price is not None %}
                                                         {{ item.variant.additional_price }}
                                                     {% elif item.product.discount_price %}
@@ -97,12 +99,14 @@
                                         <div class="d-inline-flex align-items-center border rounded-pill">
                                             <button class="btn btn-sm btn-link text-decoration-none update-cart px-2" 
                                                     data-action="decrease"
+                                                    data-item-id="{{ item.id }}"
                                                     {% if item.quantity == 1 %}disabled{% endif %}>
                                                 <i class="fas fa-minus"></i>
                                             </button>
-                                            <span class="mx-2 item-quantity fw-semibold">{{ item.quantity }}</span>
+                                            <span class="mx-2 item-quantity fw-semibold" data-item-id="{{ item.id }}">{{ item.quantity }}</span>
                                             <button class="btn btn-sm btn-link text-decoration-none update-cart px-2" 
-                                                    data-action="increase">
+                                                    data-action="increase"
+                                                    data-item-id="{{ item.id }}">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                         </div>
@@ -110,13 +114,14 @@
                                     
                                     <!-- Total Column -->
                                     <td class="text-end pe-4">
-                                        <span class="fw-bold">Rs <span class="item-subtotal">{{ item.subtotal|floatformat:2 }}</span></span>
+                                        <span class="fw-bold">Rs <span class="item-subtotal" data-item-id="{{ item.id }}">{{ item.subtotal|floatformat:2 }}</span></span>
                                     </td>
                                     
                                     <!-- Actions Column -->
                                     <td>
                                         <button class="btn btn-sm btn-outline-danger border-0 update-cart" 
                                                 data-action="remove"
+                                                data-item-id="{{ item.id }}"
                                                 title="Remove item">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
@@ -128,69 +133,185 @@
                         </table>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Continue Shopping Button -->
-            <div class="mt-3">
-                <a href="{% url 'shop' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-arrow-left me-2"></i>Continue Shopping
-                </a>
+                
+                <!-- Mobile Card View -->
+                <div class="d-lg-none">
+                    {% for item in cart_items %}
+                    {% with item.product.images.all as product_images %}
+                    <div class="cart-item-mobile border-bottom p-3" 
+                         id="cart-item-mobile-{{ item.id }}"
+                         data-product-id="{{ item.product.id }}"
+                         data-variant-id="{{ item.variant.id|default:'' }}"
+                         data-unit-price="{% if item.variant and item.variant.additional_price is not None %}{{ item.variant.additional_price }}{% elif item.product.discount_price %}{{ item.product.discount_price }}{% else %}{{ item.product.price }}{% endif %}">
+                        
+                        <div class="d-flex">
+                            <!-- Product Image -->
+                            <div class="position-relative me-3 flex-shrink-0">
+                                <img src="{% if product_images|length %}{{ product_images.0.image.url }}{% else %}{% static 'placeholder.png' %}{% endif %}" 
+                                     alt="{{ item.product.name }}" 
+                                     class="rounded"
+                                     style="width: 80px; height: 80px; object-fit: contain; background-color: #f8f9fa;">
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary cart-item-badge" data-item-id="{{ item.id }}">
+                                    {{ item.quantity }}
+                                </span>
+                            </div>
+                            
+                            <!-- Product Details -->
+                            <div class="flex-grow-1">
+                                <!-- Product Name and Delete -->
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0 fw-semibold text-truncate pe-2" style="max-width: 180px;">
+                                        {{ item.product.name }}
+                                    </h6>
+                                    <button class="btn btn-sm btn-outline-danger border-0 update-cart" 
+                                            data-action="remove"
+                                            data-item-id="{{ item.id }}"
+                                            title="Remove item">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Variant Badges -->
+                                {% if item.variant %}
+                                <div class="variant-badges mb-2">
+                                    {% if item.variant.wattage %}
+                                    <span class="badge bg-light text-dark me-1 mb-1">{{ item.variant.wattage }}W</span>
+                                    {% endif %}
+                                    {% if item.variant.color %}
+                                    <span class="badge bg-light text-dark me-1 mb-1">{{ item.variant.color }}</span>
+                                    {% endif %}
+                                    {% if item.variant.shape %}
+                                    <span class="badge bg-light text-dark me-1 mb-1">{{ item.variant.shape }}</span>
+                                    {% endif %}
+                                    {% if item.variant.size %}
+                                    <span class="badge bg-light text-dark mb-1">{{ item.variant.size }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Price -->
+                                <div class="mb-2">
+                                    {% if item.product.discount_price %}
+                                    <div class="d-flex align-items-center">
+                                        <span class="text-decoration-line-through text-muted small me-2">
+                                            Rs {{ item.product.price }}
+                                        </span>
+                                        <span class="fw-semibold text-primary">
+                                            Rs <span class="item-price" data-item-id="{{ item.id }}">
+                                                {% if item.variant and item.variant.additional_price is not None %}
+                                                    {{ item.variant.additional_price }}
+                                                {% elif item.product.discount_price %}
+                                                    {{ item.product.discount_price }}
+                                                {% else %}
+                                                    {{ item.product.price }}
+                                                {% endif %}
+                                            </span>
+                                        </span>
+                                    </div>
+                                    {% else %}
+                                    <span class="fw-semibold text-primary">
+                                        Rs <span class="item-price" data-item-id="{{ item.id }}">
+                                            {% if item.variant and item.variant.additional_price is not None %}
+                                                {{ item.variant.additional_price }}
+                                            {% else %}
+                                                {{ item.product.price }}
+                                            {% endif %}
+                                        </span>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Quantity Controls and Total -->
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <!-- Quantity Controls -->
+                                    <div class="d-inline-flex align-items-center border rounded-pill">
+                                        <button class="btn btn-sm btn-link text-decoration-none update-cart px-2" 
+                                                data-action="decrease"
+                                                data-item-id="{{ item.id }}"
+                                                {% if item.quantity == 1 %}disabled{% endif %}>
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <span class="mx-2 item-quantity fw-semibold" data-item-id="{{ item.id }}">{{ item.quantity }}</span>
+                                        <button class="btn btn-sm btn-link text-decoration-none update-cart px-2" 
+                                                data-action="increase"
+                                                data-item-id="{{ item.id }}">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Total -->
+                                    <div class="text-end">
+                                        <div class="text-muted small">Total</div>
+                                        <div class="fw-bold">Rs <span class="item-subtotal" data-item-id="{{ item.id }}">{{ item.subtotal|floatformat:2 }}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endwith %}
+                    {% endfor %}
+                </div>
             </div>
         </div>
         
-        <!-- Order Summary Section -->
-        <div class="col-lg-4">
-            <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">Order Summary</h5>
-                    
-                    <!-- Price Breakdown -->
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Subtotal</span>
-                        <span>Rs {{ total|floatformat:2 }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Shipping</span>
-                        <span class="text-success">Calculated at checkout</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Tax</span>
-                        <span class="text-success">Included</span>
-                    </div>
-                    
-                    <hr class="my-3">
-                    
-                    <!-- Total -->
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="mb-0">Total</h5>
-                        <h3 class="mb-0 text-primary">Rs <span id="cart-total">{{ total|floatformat:2 }}</span></h3>
-                    </div>
-                    
-                    <!-- Checkout Button -->
-                    <a href="/checkout/" class="btn btn-primary btn-lg w-100 py-3 mb-3">
-                        <i class="fas fa-lock me-2"></i>Proceed to Checkout
-                    </a>
-                    
-                    <!-- Secure Payment Info -->
-                    <div class="text-center text-muted small">
-                        <i class="fas fa-shield-alt me-1"></i>
-                        Secure SSL Encrypted Payment
-                    </div>
-                    
-                    <!-- Accepted Payment Methods -->
-                    <div class="mt-3">
-                        <p class="small text-muted mb-2">We Accept:</p>
-                        <div class="d-flex justify-content-center gap-2">
-                            <i class="fab fa-cc-visa fa-2x text-primary"></i>
-                            <i class="fab fa-cc-mastercard fa-2x text-danger"></i>
-                            <i class="fab fa-cc-amex fa-2x text-info"></i>
-                            <i class="fab fa-cc-paypal fa-2x text-primary"></i>
-                        </div>
+        <!-- Continue Shopping Button -->
+        <div class="mt-3">
+            <a href="{% url 'shop' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+            </a>
+        </div>
+    </div>
+    
+    <!-- Order Summary Section -->
+    <div class="col-lg-4 mt-4 mt-lg-0">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Order Summary</h5>
+                
+                <!-- Price Breakdown -->
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Shipping</span>
+                    <span class="text-success">Calculated at checkout</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Tax</span>
+                    <span class="text-success">Included</span>
+                </div>
+                
+                <hr class="my-3">
+                
+                <!-- Total -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">Total</h5>
+                    <h3 class="mb-0 text-primary">Rs <span id="cart-total">{{ total|floatformat:2 }}</span></h3>
+                </div>
+                
+                <!-- Checkout Button -->
+                <a href="/checkout/" class="btn btn-primary btn-lg w-100 py-3 mb-3">
+                    <i class="fas fa-lock me-2"></i>Proceed to Checkout
+                </a>
+                
+                <!-- Secure Payment Info -->
+                <div class="text-center text-muted small">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Secure SSL Encrypted Payment
+                </div>
+                
+                <!-- Accepted Payment Methods -->
+                <div class="mt-3">
+                    <p class="small text-muted mb-2">We Accept:</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <i class="fab fa-cc-visa fa-2x text-primary"></i>
+                        <i class="fab fa-cc-mastercard fa-2x text-danger"></i>
+                        <i class="fab fa-cc-amex fa-2x text-info"></i>
+                        <i class="fab fa-cc-paypal fa-2x text-primary"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Recommended Products Section -->
     <div class="mt-5 pt-4 border-top">
@@ -220,7 +341,7 @@
                         <h6 class="card-title mb-2 text-truncate">{{ product.name }}</h6>
                         <div class="d-flex align-items-center mb-2">
                             {% if product.discount_price %}
-                            <span class="fw-bold text-danger me-2">Rs {{ product.discount_price }}</span>
+                            <span class="fw-bold  me-2">Rs {{ product.discount_price }}</span>
                             <small class="text-decoration-line-through text-muted">Rs {{ product.price }}</small>
                             {% else %}
                             <span class="fw-bold text-primary">Rs {{ product.price }}</span>
@@ -309,25 +430,183 @@
     border-color: var(--primary-accent);
 }
 
-@media (max-width: 768px) {
-    .table-responsive {
-        font-size: 0.9rem;
+/* Cart Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .cart-item-mobile {
+            background: white;
+            transition: all 0.3s ease;
+        }
+        
+        .cart-item-mobile:hover {
+            background: #f8f9fa;
+        }
+        
+        .cart-item-mobile:last-child {
+            border-bottom: none !important;
+        }
+        
+        .text-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* Quantity controls */
+        .border.rounded-pill {
+            border: 1px solid #dee2e6 !important;
+        }
+        
+        .btn.btn-link {
+            padding: 0.25rem 0.5rem;
+            color: #6c757d;
+        }
+        
+        .btn.btn-link:hover {
+            color: #0d6efd;
+        }
+        
+        .btn.btn-link[disabled] {
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+        
+        /* Adjust badge sizes */
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.25em 0.6em;
+        }
+        
+        .position-absolute.badge {
+            font-size: 0.6rem;
+            padding: 0.2em 0.5em;
+            min-width: 20px;
+        }
+        
+        /* Make sure image fits */
+        img.rounded {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Adjust font sizes */
+        h6.fw-semibold {
+            font-size: 0.9rem;
+        }
+        
+        .text-muted.small {
+            font-size: 0.8rem;
+        }
+        
+        .fw-bold {
+            font-size: 0.95rem;
+        }
+        
+        /* Summary card adjustments */
+        .card-body {
+            padding: 1rem !important;
+        }
+        
+        h5.card-title {
+            font-size: 1.1rem;
+        }
+        
+        h3.mb-0.text-primary {
+            font-size: 1.5rem;
+        }
+        
+        /* Checkout button */
+        .btn.btn-lg {
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        /* Payment icons */
+        .fa-2x {
+            font-size: 1.5em;
+        }
     }
     
-    .table th, .table td {
-        padding: 0.75rem 0.5rem;
+    @media (max-width: 576px) {
+        .cart-item-mobile {
+            padding: 0.75rem !important;
+        }
+        
+        img.rounded {
+            width: 70px !important;
+            height: 70px !important;
+        }
+        
+        h6.fw-semibold {
+            font-size: 0.85rem;
+            max-width: 150px !important;
+        }
+        
+        .variant-badges .badge {
+            font-size: 0.65rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .btn.btn-link {
+            padding: 0.2rem 0.4rem;
+        }
+        
+        h3.mb-0.text-primary {
+            font-size: 1.3rem;
+        }
     }
     
-    .btn-lg {
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
+    @media (max-width: 400px) {
+        .cart-item-mobile {
+            padding: 0.5rem !important;
+        }
+        
+        img.rounded {
+            width: 60px !important;
+            height: 60px !important;
+        }
+        
+        h6.fw-semibold {
+            max-width: 120px !important;
+            font-size: 0.8rem;
+        }
+        
+        .d-flex.justify-content-between.align-items-center {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+        
+        .d-flex.justify-content-between.align-items-center > *:first-child {
+            margin-bottom: 0.5rem;
+        }
+        
+        .text-end {
+            align-self: flex-end;
+        }
     }
-}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    async function handleCartAction(cartItemId, productId, variantId, action) {
+    // Add a loading indicator helper
+    function showLoading(button, show = true) {
+        if (!button) return;
+        
+        if (show) {
+            button.setAttribute('data-original-html', button.innerHTML);
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.disabled = true;
+            button.classList.add('disabled');
+        } else {
+            const originalHTML = button.getAttribute('data-original-html');
+            if (originalHTML) {
+                button.innerHTML = originalHTML;
+            }
+            button.disabled = false;
+            button.classList.remove('disabled');
+        }
+    }
+    
+    async function handleCartAction(cartItemId, productId, variantId, action, button = null) {
         try {
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
             
@@ -336,6 +615,11 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('csrfmiddlewaretoken', csrfToken);
             if (variantId) {
                 formData.append('variant_id', variantId);
+            }
+            
+            // Show loading on the button that was clicked
+            if (button) {
+                showLoading(button, true);
             }
             
             // CORRECTED URL: Use /update-cart/ instead of /cart/update/
@@ -350,38 +634,129 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Request failed');
             if (!data.success) throw new Error(data.error || 'Action failed');
-            updateCartUI(data, cartItemId, productId);
+            
+            updateCartUI(data, cartItemId, productId, action);
+            
+            // Hide loading
+            if (button) {
+                showLoading(button, false);
+            }
+            
+            return true;
         } catch (error) {
             console.error('Error:', error);
             showToast(error.message, 'error');
+            
+            // Hide loading even on error
+            if (button) {
+                showLoading(button, false);
+            }
+            
             return false;
         }
     }
 
-    function updateCartUI(data, cartItemId, productId) {
-        const itemElement = document.getElementById(`cart-item-${cartItemId}`);
-        if (itemElement) {
-            const quantityElement = itemElement.querySelector('.item-quantity');
-            quantityElement.textContent = data.quantity;
+    function updateCartUI(data, cartItemId, productId, action) {
+        // Update desktop view
+        const desktopItem = document.getElementById(`cart-item-${cartItemId}`);
+        if (desktopItem) {
+            // Update quantity display
+            const quantityElements = document.querySelectorAll(`.item-quantity[data-item-id="${cartItemId}"]`);
+            quantityElements.forEach(element => {
+                element.textContent = data.quantity;
+            });
             
-            const subtotalElement = itemElement.querySelector('.item-subtotal');
-            subtotalElement.textContent = parseFloat(data.subtotal).toFixed(2);
+            // Update subtotal
+            const subtotalElements = document.querySelectorAll(`.item-subtotal[data-item-id="${cartItemId}"]`);
+            subtotalElements.forEach(element => {
+                element.textContent = parseFloat(data.subtotal).toFixed(2);
+            });
             
-            const badgeElement = itemElement.querySelector('.badge');
-            if (badgeElement) {
-                badgeElement.textContent = data.quantity;
-            }
+            // Update badges
+            const badgeElements = document.querySelectorAll(`.cart-item-badge[data-item-id="${cartItemId}"]`);
+            badgeElements.forEach(element => {
+                element.textContent = data.quantity;
+            });
             
-            const decreaseBtn = itemElement.querySelector('[data-action="decrease"]');
-            decreaseBtn.disabled = data.quantity <= 1;
-            decreaseBtn.classList.toggle('disabled', data.quantity <= 1);
+            // Update decrease button state
+            const decreaseButtons = document.querySelectorAll(`[data-action="decrease"][data-item-id="${cartItemId}"]`);
+            decreaseButtons.forEach(button => {
+                button.disabled = data.quantity <= 1;
+                button.classList.toggle('disabled', data.quantity <= 1);
+            });
         }
         
+        // Update mobile view
+        const mobileItem = document.getElementById(`cart-item-mobile-${cartItemId}`);
+        if (mobileItem) {
+            // Update quantity display
+            const quantityElements = mobileItem.querySelectorAll(`.item-quantity[data-item-id="${cartItemId}"]`);
+            quantityElements.forEach(element => {
+                element.textContent = data.quantity;
+            });
+            
+            // Update subtotal
+            const subtotalElements = mobileItem.querySelectorAll(`.item-subtotal[data-item-id="${cartItemId}"]`);
+            subtotalElements.forEach(element => {
+                element.textContent = parseFloat(data.subtotal).toFixed(2);
+            });
+            
+            // Update badges
+            const badgeElements = mobileItem.querySelectorAll(`.cart-item-badge[data-item-id="${cartItemId}"]`);
+            badgeElements.forEach(element => {
+                element.textContent = data.quantity;
+            });
+            
+            // Update decrease button state
+            const decreaseButtons = mobileItem.querySelectorAll(`[data-action="decrease"][data-item-id="${cartItemId}"]`);
+            decreaseButtons.forEach(button => {
+                button.disabled = data.quantity <= 1;
+                button.classList.toggle('disabled', data.quantity <= 1);
+            });
+        }
+        
+        // Update cart total
         const totalElement = document.getElementById('cart-total');
-        if (totalElement) {
+        if (totalElement && data.total !== undefined) {
             totalElement.textContent = parseFloat(data.total).toFixed(2);
         }
         
+        // Update cart count in header
+        updateHeaderCartCount(data.cart_count);
+        
+        // Handle removal
+        if (action === 'remove' || data.removed || data.quantity === 0) {
+            // Remove from desktop view
+            if (desktopItem) {
+                desktopItem.style.opacity = '0';
+                desktopItem.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    desktopItem.remove();
+                    checkEmptyCart();
+                }, 300);
+            }
+            
+            // Remove from mobile view
+            if (mobileItem) {
+                mobileItem.style.opacity = '0';
+                mobileItem.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    mobileItem.remove();
+                    checkEmptyCart();
+                }, 300);
+            }
+            
+            // Show toast for removal
+            if (action === 'remove') {
+                showToast('Item removed from cart', 'success');
+            }
+        } else {
+            // Show success toast for quantity update
+            showToast('Cart updated successfully', 'success');
+        }
+    }
+    
+    function updateHeaderCartCount(count) {
         // Update cart count in navbar using the global function from base.html
         if (typeof updateHeaderCounts === 'function') {
             updateHeaderCounts();
@@ -389,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fallback: update manually
             const cartBadge = document.getElementById('cart-badge');
             if (cartBadge) {
-                cartBadge.textContent = data.cart_count;
+                cartBadge.textContent = count;
                 cartBadge.style.transform = 'scale(1.3)';
                 setTimeout(() => {
                     cartBadge.style.transform = 'scale(1)';
@@ -397,41 +772,55 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        if (data.removed) {
-            const itemElement = document.getElementById(`cart-item-${cartItemId}`);
-            if (itemElement) {
-                itemElement.style.opacity = '0';
-                itemElement.style.transition = 'opacity 0.3s ease';
-                setTimeout(() => {
-                    itemElement.remove();
-                    if (data.cart_count === 0) {
-                        window.location.reload();
-                    }
-                }, 300);
-            }
+        // Update cart count in cart page header
+        const cartCountElement = document.querySelector('.cart-count');
+        if (cartCountElement) {
+            cartCountElement.textContent = count;
+        }
+    }
+    
+    function checkEmptyCart() {
+        // Check if both desktop and mobile views are empty
+        const desktopItems = document.querySelectorAll('[id^="cart-item-"]');
+        const mobileItems = document.querySelectorAll('.cart-item-mobile');
+        
+        if (desktopItems.length === 0 && mobileItems.length === 0) {
+            // Reload to show empty cart state
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
         }
     }
 
+    // Add event listeners to all cart action buttons
     document.querySelectorAll('.update-cart').forEach(button => {
         button.addEventListener('click', async function() {
-            const cartItemElement = this.closest('[id^="cart-item-"]');
-            const cartItemId = cartItemElement.id.split('-')[2];
+            const cartItemId = this.dataset.itemId;
+            
+            // Find the closest cart item element
+            let cartItemElement = this.closest('[id^="cart-item-"]') || 
+                                 this.closest('.cart-item-mobile');
+            
+            if (!cartItemElement && cartItemId) {
+                // Try to find by ID
+                cartItemElement = document.getElementById(`cart-item-${cartItemId}`) || 
+                                 document.getElementById(`cart-item-mobile-${cartItemId}`);
+            }
+            
+            if (!cartItemElement) {
+                showToast('Could not find cart item', 'error');
+                return;
+            }
+            
             const productId = cartItemElement.dataset.productId;
             const variantId = cartItemElement.dataset.variantId || '';
             const action = this.dataset.action;
             
-            if (action === 'remove' && !confirm('Remove this item from your cart?')) return;
-            
-            this.disabled = true;
-            const originalHTML = this.innerHTML;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            
-            try {
-                await handleCartAction(cartItemId, productId, variantId, action);
-            } finally {
-                this.disabled = false;
-                this.innerHTML = originalHTML;
+            if (action === 'remove' && !confirm('Remove this item from your cart?')) {
+                return;
             }
+            
+            await handleCartAction(cartItemId, productId, variantId, action, this);
         });
     });
 
@@ -439,7 +828,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create toast notification
         const toast = document.createElement('div');
         toast.className = `position-fixed top-0 end-0 p-3`;
-        toast.style.zIndex = '11';
+        toast.style.zIndex = '9999';
         
         const toastInner = document.createElement('div');
         toastInner.className = `toast show align-items-center text-bg-${type === 'error' ? 'danger' : 'success'} border-0`;
@@ -453,64 +842,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'} me-2"></i>
                     ${message}
                 </div>
-                <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white me-3 m-auto" onclick="this.closest('.toast').remove()"></button>
             </div>
         `;
         
         toast.appendChild(toastInner);
         document.body.appendChild(toast);
         
+        // Auto remove after 3 seconds
         setTimeout(() => {
-            toast.remove();
+            if (toast.parentNode) {
+                toast.remove();
+            }
         }, 3000);
     }
     
-    // Also add event listener for the remove-from-cart endpoint (alternative method)
-    document.querySelectorAll('.remove-item').forEach(button => {
-        button.addEventListener('click', async function(e) {
-            e.preventDefault();
-            const itemId = this.dataset.itemId;
-            
-            if (!confirm('Remove this item from your cart?')) return;
-            
-            try {
-                const response = await fetch(`/remove-from-cart/${itemId}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    // Ensure all buttons have the data-item-id attribute
+    document.addEventListener('DOMContentLoaded', function() {
+        // This runs after the initial DOMContentLoaded to ensure everything is ready
+        setTimeout(() => {
+            // Add data-item-id to all cart action buttons that don't have it
+            document.querySelectorAll('.update-cart').forEach(button => {
+                if (!button.dataset.itemId) {
+                    // Try to find the item id from parent elements
+                    const cartItemElement = button.closest('[id^="cart-item-"]') || 
+                                          button.closest('.cart-item-mobile');
+                    if (cartItemElement) {
+                        const idMatch = cartItemElement.id.match(/-(\d+)$/);
+                        if (idMatch) {
+                            button.dataset.itemId = idMatch[1];
+                        }
                     }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Remove the item from the DOM
-                    const itemElement = document.getElementById(`cart-item-${itemId}`);
-                    if (itemElement) {
-                        itemElement.remove();
-                    }
-                    
-                    // Update cart total
-                    const totalElement = document.getElementById('cart-total');
-                    if (totalElement) {
-                        totalElement.textContent = parseFloat(data.total).toFixed(2);
-                    }
-                    
-                    // Update header counts
-                    if (typeof updateHeaderCounts === 'function') {
-                        updateHeaderCounts();
-                    }
-                    
-                    showToast('Item removed from cart', 'success');
-                } else {
-                    showToast('Error: ' + data.error, 'error');
                 }
-            } catch (error) {
-                console.error('Error removing item:', error);
-                showToast('Failed to remove item', 'error');
-            }
-        });
+            });
+        }, 100);
     });
 });
 </script>
