@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import Category, Tag, Product
 from django.contrib import admin
-from .models import Order, OrderItem, Address, ProductImage, ProductVariant, Brand
+from .models import Order, OrderItem, Address, ProductImage, ProductVariant, Brand, Review
 from django.utils.html import format_html
 
 
@@ -158,3 +158,53 @@ class ProductAdmin(admin.ModelAdmin):
 admin.site.register(Product, ProductAdmin)
 
 admin.site.register(Brand)
+
+
+
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('id', 'product_column', 'user_column', 'rating_column', 'comment_preview', 'created_at')
+    list_filter = ('rating', 'created_at', 'product')
+    search_fields = ('comment', 'user__username', 'product__name')
+    list_per_page = 25
+    
+    def product_column(self, obj):
+        return format_html('<strong>{}</strong><br><small>ID: {}</small>', 
+                          obj.product.name, obj.product.id)
+    product_column.short_description = 'Product'
+    
+    def user_column(self, obj):
+        return format_html('<strong>{}</strong><br><small>{}</small>', 
+                          obj.user.username, obj.user.email)
+    user_column.short_description = 'User'
+    
+    def rating_column(self, obj):
+        stars = '★' * obj.rating + '☆' * (5 - obj.rating)
+        color = {
+            1: '#ff6b6b',  # Red for 1 star
+            2: '#ffa94d',  # Orange for 2 stars
+            3: '#ffd93d',  # Yellow for 3 stars
+            4: '#51cf66',  # Green for 4 stars
+            5: '#339af0',  # Blue for 5 stars
+        }.get(obj.rating, '#000000')
+        return format_html('<span style="color: {}; font-size: 18px;">{}</span>', color, stars)
+    rating_column.short_description = 'Rating'
+    
+    def comment_preview(self, obj):
+        return format_html('<div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">{}</div>', 
+                          obj.comment)
+    comment_preview.short_description = 'Comment'
+    
+    # Fields when editing
+    fieldsets = (
+        (None, {
+            'fields': ('product', 'user', 'rating', 'comment')
+        }),
+        ('Metadata', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ('created_at',)
+
+admin.site.register(Review, ReviewAdmin)

@@ -9,19 +9,25 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <link rel="icon" type="image/png" href="{% static 'images/farm.png' %}">
-
+    
     <style>
         :root {
             --primary-dark: #4936A2;
-            --primary-accent: #382d9c;
+            --primary-accent: #6c32b2;
             --secondary-dark: #606a7d;
             --text-light: #f8f9fa;
             --text-muted: #9ca3af;
             --bg-light: #fcfdff;
             --danger: #ef4444;
             --text-color: #1f2937;
+            --glow-color: #00a8ff; /* Glow color for time */
+            --glow-intense: #0097e6; /* Intense glow color */
         }
+        
+
+    
         
         body {
             padding-top: 120px; /* Space for fixed navbar */
@@ -29,13 +35,7 @@
         .flex {
             flex-direction: column;
         }
-        .logo-icon {
-            margin-top: 15px;
-            margin-right: 10px;
-            height: 40px;
-            width: 40px;
-            margin-bottom: 20px;
-        }
+        
         /* Modern Navbar Styles */
         .navbar-main {
             background-color: var(--primary-dark);
@@ -47,18 +47,57 @@
             z-index: 1030;
         }
         
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.75rem;
-            letter-spacing: -0.5px;
-            color: var(--text-light) !important;
-            transition: all 0.3s ease;
-        }
-        
-        .navbar-brand:hover {
-            color: var(--primary-accent) !important;
-        }
-        
+        /* Wrapper */
+.navbar-brand-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+/* ICON */
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    margin-top: 15px;
+    margin-bottom: 20px;
+
+    background-color: transparent;
+
+    transition:
+        background-color 0.3s ease-in-out,
+        transform 0.25s ease-in-out;
+
+    -webkit-mask: url("{% static 'images/farm.png' %}") no-repeat center;
+    -webkit-mask-size: contain;
+
+    mask: url("{% static 'images/farm.png' %}") no-repeat center;
+    mask-size: contain;
+}
+
+/* BRAND TEXT */
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.75rem;
+    letter-spacing: -0.5px;
+    color: var(--text-light) !important;
+    transition: color 0.3s ease, transform 0.25s ease;
+}
+
+
+.navbar-brand-wrapper:hover {
+    transform: translateY(-3px) scale(1.05);
+}
+
+.navbar-brand-wrapper:hover .logo-icon {
+    background-color: #4fd1c5;
+}
+
+.navbar-brand-wrapper:hover .navbar-brand {
+    color:  #4fd1c5 !important;
+}
+
         .nav-link {
             color: var(--text-light) !important;
             font-weight: 500;
@@ -68,7 +107,7 @@
         }
         
         .nav-link:hover, .nav-link:focus {
-            color: var(--primary-accent) !important;
+            color: var(--text-muted) !important;
         }
         
         .nav-link::after {
@@ -78,12 +117,12 @@
             left: 50%;
             width: 0;
             height: 2px;
-            background: var(--primary-accent);
+            background: var(--text-light);
             transition: all 0.3s ease;
             transform: translateX(-50%);
         }
         
-        .nav-link:hover::after {
+        .nav-link:hover::after{
             width: 70%;
         }
         
@@ -148,7 +187,7 @@
         }
         
         .search-button {
-            background-color: var(--primary-accent);
+            background-color: white;
             border: none;
             border-radius: 30px;
             padding: 0.6rem 1.25rem;
@@ -160,7 +199,7 @@
             
         }
         .search-button:hover {
-            background-color: #7015ef;
+            background-color: #1f2937;
         }
         
         /* Mobile Menu */
@@ -181,19 +220,96 @@
             transform: translateY(0);
         }
         
-        /* Time Display */
+        /* Time Display - Enhanced with Glow Effect */
         .time-circle {
             position: fixed;
-            bottom: 15px;
-            right: 15px;
-            background: var(--primary-dark);
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--primary-dark), #2c3e50);
             color: white;
-            padding: 8px 15px;
+            padding: 12px 20px;
             border-radius: 30px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 500;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 
+                0 4px 15px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(0, 168, 255, 0.4),
+                0 0 40px rgba(0, 168, 255, 0.2);
             z-index: 1020;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.5s ease;
+            animation: timeGlow 3s infinite alternate;
+            border: 1px solid rgba(0, 168, 255, 0.3);
+            backdrop-filter: blur(5px);
+        }
+        
+        .time-circle:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(0, 168, 255, 0.6),
+                0 0 50px rgba(0, 168, 255, 0.3);
+            animation-play-state: paused;
+        }
+        
+        .time-icon {
+            font-size: 1rem;
+            color: var(--glow-color);
+            filter: drop-shadow(0 0 3px var(--glow-color));
+        }
+.social-links a {
+    transition: all 0.3s ease;
+}
+.social-links a:hover {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Instagram gradient background */
+.bg-gradient-instagram {
+    background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
+}
+
+/* Link hover effects */
+.hover-text-light:hover {
+    color: white !important;
+    padding-left: 5px;
+    transition: all 0.3s ease;
+}
+        /* Glow animation */
+        @keyframes timeGlow {
+            0% {
+                box-shadow: 
+                    0 4px 15px rgba(0, 0, 0, 0.3),
+                    0 0 15px rgba(0, 168, 255, 0.3),
+                    0 0 30px rgba(0, 168, 255, 0.1);
+            }
+            50% {
+                box-shadow: 
+                    0 4px 15px rgba(0, 0, 0, 0.3),
+                    0 0 20px rgba(0, 168, 255, 0.5),
+                    0 0 40px rgba(0, 168, 255, 0.2);
+            }
+            100% {
+                box-shadow: 
+                    0 4px 15px rgba(0, 0, 0, 0.3),
+                    0 0 25px rgba(0, 168, 255, 0.7),
+                    0 0 50px rgba(0, 168, 255, 0.3);
+            }
+        }
+        
+        /* Pulse animation for seconds */
+        @keyframes pulseGlow {
+            0%, 100% {
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+                color: #ffffff;
+            }
+            50% {
+                text-shadow: 0 0 10px var(--glow-color), 0 0 20px var(--glow-color);
+                color: var(--glow-color);
+            }
         }
         
         /* Toast Notifications */
@@ -240,18 +356,20 @@
             color: white;
             border-left: 4px solid #f57c00;
         }
+        
         .btn-primary {
-        background-color: var(--primary-dark);
-        color: white;
-        border: none;
-        padding: 1rem 2rem;
-        border-radius: var(--border-radius);
-        font-weight: 600;
-        transition: var(--transition);
-        flex: 1;
-        cursor: pointer;
-        position: relative;
-    }
+            background-color: var(--primary-dark);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            transition: var(--transition);
+            flex: 1;
+            cursor: pointer;
+            position: relative;
+        }
+        
         /* Responsive Adjustments */
         @media (max-width: 992px) {
             body {
@@ -270,8 +388,100 @@
                 padding: 0.5rem 0 !important;
             }
             
-            .nav-link::after {
+            .nav-link::after{
                 display: none;
+            }
+            
+            .time-circle {
+                bottom: 15px;
+                right: 15px;
+                padding: 10px 15px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            footer {
+            padding-top: 3rem !important;
+            padding-bottom: 3rem !important;
+        }
+        
+        footer h5 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .col-md-4, .col-sm-6 {
+            margin-bottom: 2rem;
+        }
+        
+        .social-links {
+            justify-content: center !important;
+        }
+        
+        .social-links a {
+            width: 40px !important;
+            height: 40px !important;
+        }
+    }
+            .time-circle {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+                bottom: 12px;
+                right: 12px;
+                animation: timeGlowMobile 3s infinite alternate;
+            }
+            
+            @keyframes timeGlowMobile {
+                0% {
+                    box-shadow: 
+                        0 3px 10px rgba(0, 0, 0, 0.3),
+                        0 0 10px rgba(0, 168, 255, 0.3);
+                }
+                100% {
+                    box-shadow: 
+                        0 3px 10px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(0, 168, 255, 0.5);
+                }
+            }
+        
+        @media (max-width: 576px) {
+    footer {
+        text-align: center;
+    }
+    
+    .col-md-4, .col-sm-6, .col-12 {
+        margin-bottom: 2rem;
+    }
+    
+    .list-unstyled li {
+        justify-content: center !important;
+        margin-bottom: 1rem;
+    }
+    
+    .social-links {
+        justify-content: center !important;
+        gap: 1rem !important;
+    }
+    
+    .social-links a {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .social-links i {
+        font-size: 1.25rem !important;
+    }
+}
+
+        @media (max-width: 480px) {
+            .time-circle {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+                bottom: 10px;
+                right: 10px;
             }
         }
         
@@ -300,17 +510,36 @@
         .loading {
             animation: pulse 1s infinite;
         }
+        .list-unstyled li {
+        justify-content: center !important;
+        margin-bottom: 1rem;
+    }
+        /* Extra small devices */
+@media (max-width: 375px) {
+    .social-links a {
+        width: 45px !important;
+        height: 45px !important;
+    }
+    
+    footer h5 {
+        font-size: 1.1rem;
+    }
+    .list-unstyled li {
+        justify-content: center !important;
+        margin-bottom: 1rem;
+    }
+}
     </style>
 </head>
 <body data-wishlist-ids='{{ wishlist_product_ids|default:"[]"|safe }}'>
     <!-- Modern Navbar -->
     <nav class="navbar navbar-main navbar-expand-lg navbar-dark">
         <div class="container">
+            
             <!-- Brand & Mobile Toggle -->
-            <img src="{% static 'images/farm.png' %}" alt="village icon" class="logo-icon">
-            <div class="flex" >
-                <a class="navbar-brand" href="{% url 'home' %}">Brand Village</a>
-                <h6 class="text-white">All brand together</h6>
+            <div class="navbar-brand-wrapper" >
+                <img src="{% static 'images/farm.png' %}" alt="village icon" class="logo-icon">
+                <a class="navbar-brand " href="{% url 'home' %}">Brand Village</a>
             </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
                 <span class="navbar-toggler-icon"></span>
@@ -334,7 +563,7 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'shop' %}">Shop</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">Portfolio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="https://muhammad-awais-portfolio.pages.dev/">About</a></li>
                 </ul>
                 
                 <!-- Action Icons -->
@@ -346,7 +575,7 @@
                     
                     <!-- Wishlist -->
                     <a href="{% url 'wishlist' %}" class="nav-icon position-relative me-2" id="wishlist-link">
-                        <span class="badge-notification" id="wishlist-badge">{{ wishlist_count|default:0 }}</span>>
+                        <span class="badge-notification" id="wishlist-badge">{{ wishlist_count|default:0 }}</span>
                         <i class="bi bi-heart"></i>
                     </a>
 
@@ -399,44 +628,95 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Time Display -->
-    <div class="time-circle" id="pakistan-time"></div>
+    <!-- Time Display - Now with Glow Effect -->
+    <div class="time-circle" id="pakistan-time">
+        <i class="bi bi-clock time-icon"></i>
+        <span id="time-text">Loading...</span>
+    </div>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-5">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <h5 class="mb-3">Contact Us</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +92 371 0048010</li>
-                        <li class="mb-2"><i class="fas fa-envelope me-2"></i> brandvillage1@gmail.com</li>
-                        <li><i class="fas fa-map-marker-alt me-2"></i> Lower Mall Road, Lahore</li>
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h5 class="mb-3">Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-decoration-none text-white-50 hover-text-light">About Us</a></li>
-                        <li class="mb-2"><a href="#" class="text-decoration-none text-white-50 hover-text-light">Privacy Policy</a></li>
-                        <li><a href="#" class="text-decoration-none text-white-50 hover-text-light">Terms & Conditions</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h5 class="mb-3">Follow Us</h5>
-                    <div class="social-links">
-                        <a href="https://www.facebook.com/profile.php?id=100066765019267" class="text-white me-3 fs-5"><i class="fab fa-facebook"></i></a>
-                        <a href="https://www.instagram.com/brandvillage.shop/" class="text-white me-3 fs-5"><i class="fab fa-instagram"></i></a>
-                        <a href="https://tiktok.com/brandvillage19" class="text-white fs-5"><i class="fab fa-tiktok"></i></a>
-                    </div>
-                </div>
+    <!-- Footer - RESPONSIVE FIX -->
+<footer class="bg-dark text-white py-5">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Contact Column -->
+            <div class="col-md-4 col-sm-6 col-12">
+                <h5 class="mb-3 h4">Contact Us</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="fas fa-phone me-2 fs-5"></i>
+                        <span>+92 371 0048010</span>
+                    </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <i class="fas fa-envelope me-2 fs-5"></i>
+                        <span>brandvillage1@gmail.com</span>
+                    </li>
+                    <li class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt me-2 fs-5"></i>
+                        <span>Lower Mall Road, Lahore</span>
+                    </li>
+                </ul>
             </div>
-            <hr class="my-4">
-            <div class="text-center">
-                <p class="mb-0">&copy; 2023 BrandVillage. All rights reserved.</p>
+            
+            <!-- Quick Links Column -->
+            <div class="col-md-4 col-sm-6 col-12">
+                <h5 class="mb-3 h4">Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2 d-flex align-items-center">
+                        <a href="{% url 'home' %}" class="text-white-50 text-decoration-none d-flex align-items-center hover-text-light">
+                            <i class="fas fa-home me-2"></i> Home
+                        </a>
+                    </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <a href="{% url 'shop' %}" class="text-white-50 text-decoration-none d-flex align-items-center hover-text-light">
+                            <i class="fas fa-shopping-bag me-2"></i> Shop
+                        </a>
+                    </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <a href="https://muhammad-awais-portfolio.pages.dev/" class="text-white-50 text-decoration-none d-flex align-items-center hover-text-light">
+                            <i class="fas fa-user me-2"></i> About
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Social Media Column -->
+            <div class="col-md-4 col-12">
+                <h5 class="mb-3 h4">Follow Us</h5>
+                <p class="text-white-50 mb-4">Stay connected with us on social media</p>
+                <div class="social-links d-flex flex-wrap gap-3">
+                    <a href="https://www.facebook.com/profile.php?id=100066765019267" 
+                       class="text-white bg-primary rounded-circle d-flex align-items-center justify-content-center" 
+                       style="width: 45px; height: 45px; text-decoration: none; transition: all 0.3s ease;">
+                        <i class="fab fa-facebook-f fs-5"></i>
+                    </a>
+                    <a href="https://www.instagram.com/brandvillage.shop/" 
+                       class="text-white bg-gradient-instagram rounded-circle d-flex align-items-center justify-content-center" 
+                       style="width: 45px; height: 45px; text-decoration: none; transition: all 0.3s ease;">
+                        <i class="fab fa-instagram fs-5"></i>
+                    </a>
+                    <a href="https://tiktok.com/brandvillage19" 
+                       class="text-white bg-black rounded-circle d-flex align-items-center justify-content-center" 
+                       style="width: 45px; height: 45px; text-decoration: none; transition: all 0.3s ease;">
+                        <i class="fab fa-tiktok fs-5"></i>
+                    </a>
+                </div>
             </div>
         </div>
-    </footer>
+        
+        <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+        
+        <div class="row">
+            <div class="col-12 text-center">
+                <p class="mb-2 text-white-50">
+                    <i class="fas fa-copyright me-1"></i> 2023 BrandVillage. All rights reserved.
+                </p>
+                <p class="text-white-50 small">
+                    Designed with <i class="fas fa-heart text-danger"></i> for our customers
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
 
     {{ wishlist_product_ids|json_script:"wishlist-data" }}
 
@@ -707,24 +987,46 @@
             });
         }
         
+        // ==================== ENHANCED TIME DISPLAY ====================
+        
+        // Update Pakistan Time with enhanced effects
+        function updatePakistanTime() {
+            const options = { 
+                timeZone: 'Asia/Karachi',
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: true 
+            };
+            const timeString = new Date().toLocaleTimeString('en-PK', options);
+            const timeElement = document.getElementById('pakistan-time');
+            const timeText = document.getElementById('time-text');
+            
+            if (timeElement && timeText) {
+                // Get current seconds for pulsing effect
+                const seconds = new Date().getSeconds();
+                
+                // Update text
+                timeText.textContent = `PKT ${timeString}`;
+                
+                // Add pulsing effect to seconds
+                if (seconds % 2 === 0) {
+                    timeText.style.animation = 'pulseGlow 0.5s ease';
+                    timeElement.style.boxShadow = 
+                        '0 4px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 168, 255, 0.8), 0 0 60px rgba(0, 168, 255, 0.4)';
+                }
+                
+                // Clear animation after it completes
+                setTimeout(() => {
+                    timeText.style.animation = '';
+                }, 500);
+            }
+        }
+        
         // ==================== PAGE INITIALIZATION ====================
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Pakistan Time
-            function updatePakistanTime() {
-                const options = { 
-                    timeZone: 'Asia/Karachi',
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    second: '2-digit',
-                    hour12: true 
-                };
-                const timeString = new Date().toLocaleTimeString('en-PK', options);
-                const timeElement = document.getElementById('pakistan-time');
-                if (timeElement) {
-                    timeElement.textContent = `PKT ${timeString}`;
-                }
-            }
+            // Initialize Pakistan Time with glow effect
             updatePakistanTime();
             setInterval(updatePakistanTime, 1000);
             
@@ -767,6 +1069,21 @@
             window.updateHeaderCounts = updateHeaderCounts;
             window.showToast = showToast;
             window.updateAllHeartIcons = updateAllHeartIcons;
+            
+            // Add hover effect to time circle
+            const timeCircle = document.getElementById('pakistan-time');
+            if (timeCircle) {
+                timeCircle.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px) scale(1.05)';
+                    this.style.boxShadow = 
+                        '0 6px 25px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 168, 255, 0.8), 0 0 70px rgba(0, 168, 255, 0.4)';
+                });
+                
+                timeCircle.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            }
         });
     </script>
 </body>

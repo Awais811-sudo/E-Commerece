@@ -187,7 +187,14 @@
                                         </div>
                                     </div>
                                     {% endif %}
-
+<div class="position-absolute top-0 start-0 p-2 z-2">
+    {% if product.discount_price %}
+    <span class="badge bg-danger mb-1">Save {{ product.discount_percentage|floatformat:0 }}%</span>
+    {% endif %}
+    {% if product.stock <= 10 and product.stock > 0 %}
+    <span class="badge bg-warning">Low Stock</span>
+    {% endif %}
+</div>
                                     <!-- Price -->
                                     <div class="product-price mb-3">
                                         {% if product.discount_price %}
@@ -195,9 +202,7 @@
                                             <span class="h6 mb-0 text-dark fw-bold">Rs {{ product.discount_price|floatformat:0 }}</span>
                                             <span class="text-muted text-decoration-line-through ms-2 small">Rs {{ product.price|floatformat:0 }}</span>
                                             {% if product.discount_percentage %}
-                                            <span class="badge bg-danger bg-opacity-10 text-danger ms-2 small">
-                                                Save {{ product.discount_percentage|floatformat:0 }}%
-                                            </span>
+                                            
                                             {% endif %}
                                         </div>
                                         {% else %}

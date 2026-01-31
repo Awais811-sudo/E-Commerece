@@ -76,27 +76,38 @@
                             </div>
                             {% endif %}
 
-                            <!-- Price Filter -->
+                            <!-- Price Filter - UPDATED -->
                             <div class="mb-4">
                                 <label class="form-label fw-semibold mb-3 d-flex justify-content-between">
                                     <span>Price Range</span>
                                     <span class="text-muted fs-7" id="priceRangeValue">
                                         {% if request.GET.price_min or request.GET.price_max %}
-                                        Rs {{ request.GET.price_min|default:"0" }} - Rs {{ request.GET.price_max|default:"∞" }}
+                                            {% if request.GET.price_min and request.GET.price_max %}
+                                                Rs {{ request.GET.price_min }} - Rs {{ request.GET.price_max }}
+                                            {% elif request.GET.price_min %}
+                                                Rs {{ request.GET.price_min }} and above
+                                            {% elif request.GET.price_max %}
+                                                Up to Rs {{ request.GET.price_max }}
+                                            {% endif %}
+                                        {% else %}
+                                            Any Price
                                         {% endif %}
                                     </span>
                                 </label>
                                 <div class="d-flex gap-2 align-items-center">
                                     <input type="number" class="form-control form-control-sm" name="price_min" placeholder="Min" 
-                                           value="{{ request.GET.price_min }}" min="0" oninput="updatePriceRange()">
+                                           value="{{ request.GET.price_min|default:'' }}" min="0" id="minPriceInput" 
+                                           oninput="updatePriceDisplay()">
                                     <span class="text-muted">to</span>
-                                    <input type="number" class="form-control form-control-sm" name="price_max" placeholder="Max" 
-                                           value="{{ request.GET.price_max }}" min="0" oninput="updatePriceRange()">
+                                    <input type="number" class="form-control form-control-sm" name="price_max" placeholder="Max (leave empty for any)" 
+                                           value="{{ request.GET.price_max|default:'' }}" min="0" id="maxPriceInput"
+                                           oninput="updatePriceDisplay()">
                                 </div>
                                 <div class="mt-2">
                                     <input type="range" class="form-range" min="0" max="100000" step="1000" 
-                                           oninput="this.nextElementSibling.value = 'Rs ' + this.value">
-                                    <output class="small text-muted">Slide for quick select</output>
+                                           value="{% if request.GET.price_max %}{{ request.GET.price_max }}{% elif request.GET.price_min %}{{ request.GET.price_min }}{% else %}0{% endif %}"
+                                           id="priceSlider" oninput="handlePriceSlider(this.value)">
+                                    <output class="small text-muted">Slide to set max price</output>
                                 </div>
                             </div>
 
@@ -200,10 +211,10 @@
                     {% for product in page_obj %}
                     <div class="col">
                         <div class="card product-card h-100 border-0 shadow-sm position-relative">
-                            <!-- Product Badges -->
-                            <div class="position-absolute top-0 start-0 p-2">
+                            <!-- Product Badges - Updated Version -->
+                            <div class="position-absolute top-0 start-0 p-2 z-2">
                                 {% if product.discount_price %}
-                                <span class="badge bg-danger">Save {{ product.discount_percentage|floatformat:0 }}%</span>
+                                <span class="badge bg-danger mb-1">Save {{ product.discount_percentage|floatformat:0 }}%</span>
                                 {% endif %}
                                 {% if product.stock <= 10 and product.stock > 0 %}
                                 <span class="badge bg-warning">Low Stock</span>
@@ -386,15 +397,19 @@
                 </select>
             </div>
 
-            <!-- Price Filter -->
+            <!-- Price Filter - UPDATED for Mobile -->
             <div class="mb-4">
                 <label class="form-label fw-semibold mb-2">Price Range</label>
                 <div class="row g-2">
                     <div class="col-6">
-                        <input type="number" class="form-control" name="price_min" placeholder="Min" value="{{ request.GET.price_min }}">
+                        <input type="number" class="form-control mobile-price-min" name="price_min" 
+                               placeholder="Min" value="{{ request.GET.price_min }}" min="0" 
+                               oninput="updateMobilePriceDisplay()">
                     </div>
                     <div class="col-6">
-                        <input type="number" class="form-control" name="price_max" placeholder="Max" value="{{ request.GET.price_max }}">
+                        <input type="number" class="form-control mobile-price-max" name="price_max" 
+                               placeholder="Max (leave empty for any)" value="{{ request.GET.price_max }}" 
+                               min="0" oninput="updateMobilePriceDisplay()">
                     </div>
                 </div>
             </div>
@@ -472,6 +487,35 @@
 {{ wishlist_product_ids|json_script:"wishlist-data" }}
 
 <style>
+    .form-range::-webkit-slider-thumb {
+    background: #000000;
+}
+
+.form-range::-moz-range-track {
+    background: #000000;
+}
+
+.form-range::-moz-range-thumb {
+    background: #000000;
+}
+/* Change focus border color to black */
+.form-select:focus {
+    border-color: #000000;
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25);
+}
+
+/* Optional: Change the selected option background color */
+.form-select option:checked {
+    background-color: #000000;
+    color: white;
+}
+
+/* For Webkit browsers (Chrome, Safari, Edge) */
+.form-select option:hover,
+.form-select option:focus {
+    background-color: #000000;
+    color: white;
+}
     /* Product Card Styling - Responsive Design */
     .product-card {
         display: flex;
@@ -1061,263 +1105,128 @@
 
 <!-- Wishlist data for JavaScript -->
 {{ wishlist_product_ids|json_script:"wishlist-data" }}
-
-<style>
-    /* Product Card Styling - Responsive Design */
-    .product-card {
-        transition: all 0.3s ease;
-        border-radius: 10px;
-        overflow: hidden;
-        background: white;
-    }
-    
-    .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
-    }
-    
-    .product-image-container {
-        position: relative;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    }
-    
-    .product-image-container img {
-        transition: transform 0.5s ease;
-    }
-    
-    .product-card:hover .product-image-container img {
-        transform: scale(1.05);
-    }
-    
-    /* Wishlist Button Styling */
-    .shop-wishlist-btn {
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: white !important;
-        border: 1px solid #dee2e6 !important;
-        transition: all 0.3s ease;
-        z-index: 10;
-    }
-    
-    .shop-wishlist-btn:hover {
-        background: #f8d7da !important;
-        border-color: #f5c6cb !important;
-        transform: scale(1.1);
-    }
-    
-    .shop-wishlist-btn i {
-        font-size: 16px;
-        color: #6c757d;
-        transition: all 0.3s ease;
-    }
-    
-    .shop-wishlist-btn i.bi-heart-fill {
-        color: #dc3545;
-    }
-    
-    .shop-wishlist-btn:hover i {
-        color: #dc3545;
-    }
-    
-    /* Add to Cart Button Loading States */
-    .add-to-cart-btn {
-        transition: all 0.3s ease;
-        position: relative;
-    }
-    
-    .add-to-cart-btn.loading {
-        color: transparent !important;
-    }
-    
-    .add-to-cart-btn.success {
-        background-color: #198754 !important;
-        border-color: #198754 !important;
-    }
-    
-    /* Loading spinner */
-    .loading-spinner {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-top-color: white;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        vertical-align: middle;
-        margin-right: 8px;
-    }
-    
-    .add-to-cart-btn.loading .loading-spinner {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        margin-left: -8px;
-        margin-top: -8px;
-    }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    
-    /* Toast Notification */
-    .shop-toast {
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 300px;
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        border-left: 4px solid;
-        animation: slideInRight 0.3s ease;
-    }
-    
-    .shop-toast.success {
-        border-left-color: #198754;
-    }
-    
-    .shop-toast.error {
-        border-left-color: #dc3545;
-    }
-    
-    .shop-toast.info {
-        border-left-color: #0d6efd;
-    }
-    
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-    
-    /* Badge Animation */
-    @keyframes badgePulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.3); }
-        100% { transform: scale(1); }
-    }
-    
-    .badge-pulse {
-        animation: badgePulse 0.5s ease;
-    }
-    
-    /* Responsive Design */
-    @media (max-width: 576px) {
-        .row-cols-sm-2 > .col {
-            padding: 8px;
-        }
-        
-        .product-card {
-            margin-bottom: 0;
-        }
-        
-        .product-image-container {
-            height: 150px !important;
-        }
-        
-        .card-title {
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .h5 {
-            font-size: 1.1rem;
-        }
-        
-        .btn {
-            padding: 0.375rem 0.75rem;
-            font-size: 0.875rem;
-        }
-        
-        .shop-wishlist-btn {
-            width: 32px;
-            height: 32px;
-        }
-        
-        .shop-wishlist-btn i {
-            font-size: 14px;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .g-4 {
-            gap: 16px !important;
-        }
-        
-        .product-image-container {
-            height: 180px;
-        }
-    }
-    
-    @media (max-width: 400px) {
-        .row-cols-sm-2 {
-            --bs-columns: 1;
-        }
-        
-        .product-image-container {
-            height: 140px !important;
-        }
-    }
-    
-    @media (min-width: 992px) {
-        .row-cols-lg-3 > .col {
-            flex: 0 0 auto;
-            width: 33.33333333%;
-        }
-    }
-    
-    /* Custom scrollbar for filter sections */
-    .category-list, .brand-list {
-        max-height: 300px;
-        overflow-y: auto;
-        padding-right: 10px;
-    }
-    
-    .category-list::-webkit-scrollbar,
-    .brand-list::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .category-list::-webkit-scrollbar-track,
-    .brand-list::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 3px;
-    }
-    
-    .category-list::-webkit-scrollbar-thumb,
-    .brand-list::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 3px;
-    }
-    
-    .category-list::-webkit-scrollbar-thumb:hover,
-    .brand-list::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
-</style>
+<!-- Add this at the top of your product grid section -->
+<div class="alert alert-info d-none" id="priceDebug">
+    Debug: Min Price: <span id="debugMin"></span>, Max Price: <span id="debugMax"></span>
+</div>
 
 <script>
+    // Add this to see what values are being submitted
     document.addEventListener('DOMContentLoaded', function() {
+        const filterForm = document.getElementById('filterForm');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                const minPrice = document.getElementById('minPriceInput')?.value;
+                const maxPrice = document.getElementById('maxPriceInput')?.value;
+                
+                console.log('Submitting with:', {
+                    minPrice: minPrice,
+                    maxPrice: maxPrice
+                });
+                
+                // Show debug info
+                const debugDiv = document.getElementById('priceDebug');
+                if (debugDiv) {
+                    document.getElementById('debugMin').textContent = minPrice || 'empty';
+                    document.getElementById('debugMax').textContent = maxPrice || 'empty';
+                    debugDiv.classList.remove('d-none');
+                }
+                
+                // Don't prevent default - let it submit
+            });
+        }
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ==================== PRICE FILTER FIXES ====================
+
+// Update price display text
+function updatePriceDisplay() {
+    const minPrice = document.getElementById('minPriceInput')?.value || '';
+    const maxPrice = document.getElementById('maxPriceInput')?.value || '';
+    const display = document.getElementById('priceRangeValue');
+    
+    if (display) {
+        if (minPrice && maxPrice) {
+            display.textContent = `Rs ${minPrice} - Rs ${maxPrice}`;
+        } else if (minPrice) {
+            display.textContent = `Rs ${minPrice} and above`;
+        } else if (maxPrice) {
+            display.textContent = `Up to Rs ${maxPrice}`;
+        } else {
+            display.textContent = 'Any Price';
+        }
+    }
+    
+    // Update slider position based on current max value
+    updatePriceSlider();
+}
+
+// Handle price slider input - UPDATED: Only update max price
+function handlePriceSlider(value) {
+    const maxInput = document.getElementById('maxPriceInput');
+    
+    // Update ONLY max input with slider value
+    if (maxInput) {
+        maxInput.value = value;
+    }
+    
+    // Update display
+    updatePriceDisplay();
+}
+
+// Update slider position based on max price value
+function updatePriceSlider() {
+    const slider = document.getElementById('priceSlider');
+    const maxPrice = document.getElementById('maxPriceInput')?.value;
+    
+    if (slider) {
+        // Set slider value based on max price
+        if (maxPrice) {
+            slider.value = maxPrice;
+        } else {
+            slider.value = 0;
+        }
+    }
+}
+
+// Initialize price filter on page load
+function initializePriceFilter() {
+    updatePriceDisplay();
+    
+    // Add input validation
+    const minInput = document.getElementById('minPriceInput');
+    const maxInput = document.getElementById('maxPriceInput');
+    
+    if (minInput) {
+        minInput.addEventListener('input', function(e) {
+            // Ensure min doesn't exceed max if both are set
+            const maxVal = maxInput?.value;
+            if (maxVal && parseInt(this.value) > parseInt(maxVal)) {
+                this.value = maxVal;
+                // Update slider if max changes
+                updatePriceSlider();
+            }
+            updatePriceDisplay();
+        });
+    }
+    
+    if (maxInput) {
+        maxInput.addEventListener('input', function(e) {
+            // Ensure max is not less than min if both are set
+            const minVal = minInput?.value;
+            if (minVal && parseInt(this.value) < parseInt(minVal)) {
+                this.value = minVal;
+            }
+            updatePriceDisplay();
+            
+            // Update slider position when max changes
+            updatePriceSlider();
+        });
+    }
+}
+        
         // ==================== SHOP PAGE CART & WISHLIST FUNCTIONALITY ====================
         
         // Wishlist data
@@ -1574,19 +1483,6 @@
         
         // ==================== EXISTING SHOP PAGE FUNCTIONALITY ====================
         
-        // Update price range display
-        function updatePriceRange() {
-            const minPrice = document.querySelector('input[name="price_min"]')?.value || 0;
-            const maxPrice = document.querySelector('input[name="price_max"]')?.value || '∞';
-            const display = document.getElementById('priceRangeValue');
-            if (display) {
-                display.textContent = `Rs ${minPrice} - Rs ${maxPrice}`;
-            }
-        }
-        
-        // Initialize price range display
-        updatePriceRange();
-        
         // View toggle functionality
         const viewToggleLinks = document.querySelectorAll('[data-view]');
         viewToggleLinks.forEach(link => {
@@ -1629,7 +1525,22 @@
         // Remove filter function
         window.removeFilter = function(filterKey) {
             const url = new URL(window.location);
+            
+            // If removing price filters, also clear input fields
+            if (filterKey === 'price_min') {
+                const minInput = document.getElementById('minPriceInput');
+                if (minInput) minInput.value = '';
+            }
+            if (filterKey === 'price_max') {
+                const maxInput = document.getElementById('maxPriceInput');
+                if (maxInput) maxInput.value = '';
+            }
+            
+            // Remove from URL
             url.searchParams.delete(filterKey);
+            
+            // Update price display
+            updatePriceDisplay();
             
             // Also remove from forms
             const forms = ['filterForm', 'mobileFilterForm'].map(id => document.getElementById(id)).filter(f => f);
@@ -1651,10 +1562,7 @@
         const priceRange = document.querySelector('.form-range');
         if (priceRange) {
             priceRange.addEventListener('input', function() {
-                const minInput = document.querySelector('input[name="price_min"]');
-                if (minInput && !minInput.value) {
-                    minInput.value = this.value;
-                }
+                handlePriceSlider(this.value);
             });
         }
         
@@ -1679,11 +1587,12 @@
             imageObserver.observe(img);
         });
         
-        // Initialize cart and wishlist functionality
+        // Initialize everything
+        initializePriceFilter();
         initializeShopWishlistState();
         setupShopEventListeners();
         
-        console.log('Shop page with cart/wishlist functionality initialized');
+        console.log('Shop page with price filter fixes initialized');
     });
 </script>
 {% endblock %}

@@ -290,9 +290,11 @@
         gap: 0.5rem;
         position: relative;
     }
-
+    .btn:hover {
+        color: var(--text-light);
+    }
     .btn-outline:hover {
-        background-color: rgba(73, 54, 162, 0.1);
+        background-color: var(--primary-dark);
     }
 
     /* Loading spinner for buttons */
@@ -315,6 +317,7 @@
     /* Product Description */
     .product-description {
         margin: 3rem 0;
+        color: var(--primary-accent)
     }
 
     .section-title {
@@ -336,7 +339,7 @@
     }
 
     .description-content {
-        color: var(--text-muted);
+        color: var(--primary-accent);
         line-height: 1.8;
     }
 
@@ -392,7 +395,7 @@
     }
 
     .review-content {
-        color: var(--text-muted);
+        color: var(--secondary-dark);
         line-height: 1.7;
         margin-bottom: 1rem;
     }
@@ -655,16 +658,16 @@
                 
                 <div class="price-section">
                     {% if product.discount_price %}
-                        <span class="current-price">Rs {{ product.discount_price }}</span>
+                        <span class="current-price text">Rs {{ product.discount_price }}</span>
                         <span class="original-price">Rs {{ product.price }}</span>
                         <span class="discount-badge">Save Rs {{ product.price|subtract:product.discount_price }}</span>
                     {% else %}
-                        <span class="current-price">Rs {{ product.price }}</span>
+                        <span class="current-price text">Rs {{ product.price }}</span>
                     {% endif %}
                 </div>
                 
                 <div class="stock-info">
-                    <span>Availability:</span>
+                    <span class="">Availability:</span>
                     <span class="{% if product.stock > 0 %}in-stock{% else %}out-of-stock{% endif %}">
                         {{ product.stock }} in stock
                     </span>
@@ -688,10 +691,10 @@
                                            value="{{ variant.id }}" 
                                            class="variant-radio"
                                            data-variant-id="{{ variant.id }}">
-                                    <label for="wattage-{{ variant.id }}" class="variant-label">
+                                    <label for="wattage-{{ variant.id }}" class="variant-label"
                                         {{ variant.wattage }}W 
                                         {% if variant.additional_price %}
-                                            <small class="text-success">(+Rs {{ variant.additional_price }})</small>
+                                            <small class="text">(+Rs {{ variant.additional_price }})</small>
                                         {% endif %}
                                     </label>
                                 </div>
@@ -714,10 +717,10 @@
                                            value="{{ variant.id }}" 
                                            class="variant-radio"
                                            data-variant-id="{{ variant.id }}">
-                                    <label for="color-{{ variant.id }}" class="variant-label">
+                                    <label for="color-{{ variant.id }}" class="variant-label ">
                                         {{ variant.color }}
                                         {% if variant.additional_price %}
-                                            <small class="text-success">(+Rs {{ variant.additional_price }})</small>
+                                            <small class="text">(+Rs {{ variant.additional_price }})</small>
                                         {% endif %}
                                     </label>
                                 </div>
@@ -740,10 +743,10 @@
                                            value="{{ variant.id }}" 
                                            class="variant-radio"
                                            data-variant-id="{{ variant.id }}">
-                                    <label for="shape-{{ variant.id }}" class="variant-label">
+                                    <label for="shape-{{ variant.id }}" class="variant-label ">
                                         {{ variant.shape }}
                                         {% if variant.additional_price %}
-                                            <small class="text-success">(+Rs {{ variant.additional_price }})</small>
+                                            <small class="text">(+Rs {{ variant.additional_price }})</small>
                                         {% endif %}
                                     </label>
                                 </div>
@@ -766,10 +769,10 @@
                                            value="{{ variant.id }}" 
                                            class="variant-radio"
                                            data-variant-id="{{ variant.id }}">
-                                    <label for="size-{{ variant.id }}" class="variant-label">
+                                    <label for="size-{{ variant.id }}" class="variant-label >
                                         {{ variant.size }}
                                         {% if variant.additional_price %}
-                                            <small class="text-success">(+Rs {{ variant.additional_price }})</small>
+                                            <small class="text">(+Rs {{ variant.additional_price }})</small>
                                         {% endif %}
                                     </label>
                                 </div>
@@ -793,8 +796,8 @@
                 </div>
                 
                 <button type="button" class="btn btn-outline" id="wishlist-btn" data-product-id="{{ product.id }}">
-                    <i class="bi {% if product.id in wishlist_product_ids %}bi-heart-fill text-danger{% else %}bi-heart{% endif %} me-1"></i>
-                    <span id="wishlist-text">
+                    <i class="bi {% if product.id in wishlist_product_ids %}bi-heart-fill text-danger{% else %}bi-heart{% endif %} me-1 text"></i>
+                    <span id="wishlist-text" class="text">
                         {% if product.id in wishlist_product_ids %}
                             Remove from Wishlist
                         {% else %}
@@ -808,8 +811,8 @@
     
     <!-- Product Description -->
     <div class="product-description">
-        <h2 class="section-title">Product Description</h2>
-        <div class="description-content">
+        <h2 class="section-title text">Product Description</h2>
+        <div class="description-content ">
             {{ product.description|linebreaks }}
         </div>
     </div>
@@ -817,7 +820,7 @@
     <!-- Reviews Section -->
     <div class="reviews-section">
         <div class="reviews-header">
-            <h2 class="section-title">Customer Reviews</h2>
+            <h2 class="section-title text">Customer Reviews</h2>
             <div class="dropdown">
                 <button class="btn btn-outline dropdown-toggle" type="button" id="sortReviewsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     Sort Reviews
@@ -919,7 +922,7 @@
     
     <!-- Related Products -->
     <div class="related-products-section">
-        <h2 class="section-title">You May Also Like</h2>
+        <h2 class="section-title text">You May Also Like</h2>
         <div class="related-products">
             {% for item in recommended_products %}
                 {% if item.slug and item.slug.strip %}

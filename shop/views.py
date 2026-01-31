@@ -3,7 +3,7 @@ from django.core.paginator import Paginator
 from django.db.models import Case, When, F, DecimalField, Q, Sum, Count, Prefetch, Avg
 from .models import *
 from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from .forms import CustomUserCreationForm, CustomAuthenticationForm, AddressForm
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -16,7 +16,7 @@ from django.forms.models import model_to_dict
 import json
 from django.views import View
 from django.contrib.auth import get_user_model
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from django.utils import timezone
@@ -817,18 +817,34 @@ def shop(request):
     sort_by = request.GET.get('sort_by')
     brand_slug = request.GET.get('brand')
     
+    # Brand filter
     if brand_slug:
         products = products.filter(brand__slug=brand_slug)
     
-    if price_min and price_max:
-        products = products.filter(
-            effective_price__gte=price_min,
-            effective_price__lte=price_max
-        )
+    # FIXED: Price filtering - handle min and max separately
+    if price_min:
+        try:
+            # Convert to decimal for proper comparison
+            min_price = Decimal(price_min)
+            products = products.filter(effective_price__gte=min_price)
+        except (ValueError, InvalidOperation):
+            # If price_min is not a valid number, ignore it
+            pass
     
+    if price_max:
+        try:
+            # Convert to decimal for proper comparison
+            max_price = Decimal(price_max)
+            products = products.filter(effective_price__lte=max_price)
+        except (ValueError, InvalidOperation):
+            # If price_max is not a valid number, ignore it
+            pass
+    
+    # Category filter
     if category:
         products = products.filter(category__slug=category)
     
+    # Sorting
     if sort_by == 'price_low_to_high':
         products = products.order_by('effective_price')
     elif sort_by == 'price_high_to_low':
@@ -1334,7 +1350,22 @@ def remove_guest_wishlist_item(request, product_id):
         return JsonResponse({'success': False, 'error': 'Item not found.'}, status=404)
     return JsonResponse({'success': False, 'error': 'User is authenticated.'}, status=400)
 
+
+
+
+# =====================================
 # ========== DASHBOARD VIEWS ==========
+# =====================================
+
+
+def admin_check(user):
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
+def superuser_check(user):
+    return user.is_authenticated and user.is_superuser
+
+
+@user_passes_test(admin_check, login_url='login')
 def admin_dashboard(request):
     days = int(request.GET.get('days', 30))
     date_range = timezone.now() - timedelta(days=days)
@@ -1420,6 +1451,7 @@ def admin_dashboard(request):
     
     return render(request, 'dashboard/dashboard.html', context)
 
+@user_passes_test(admin_check, login_url='login')
 def order_list(request):
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '')
@@ -1458,6 +1490,7 @@ def order_list(request):
         'status_choices': Order.STATUS_CHOICES,
     })
 
+@user_passes_test(admin_check, login_url='login')
 def update_order_status(request, order_id):
     if request.method == 'POST':
         order = get_object_or_404(Order, id=order_id)
@@ -1469,6 +1502,7 @@ def update_order_status(request, order_id):
         return JsonResponse({'success': False, 'error': 'Invalid status'})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
+@user_passes_test(admin_check, login_url='login')
 def cancel_order(request, order_id):
     if request.method == 'POST':
         order = get_object_or_404(Order, id=order_id)
@@ -1477,6 +1511,7 @@ def cancel_order(request, order_id):
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'message': 'Invalid request'})
 
+@user_passes_test(admin_check, login_url='login')
 def product_list(request):
     products = Product.objects.select_related("category", "brand").prefetch_related("images", "variants")
     

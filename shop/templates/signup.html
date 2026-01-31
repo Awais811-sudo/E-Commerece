@@ -1,38 +1,211 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block title %}Register - Esenza Scents{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-lg border-0 rounded-4">
-                <div class="card-body">
-                    <h3 class="card-title text-center mb-4">Create an Account</h3>
-                    <form method="post">
+        <div class="col-md-8 col-lg-6">
+            <!-- Registration Card -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <!-- Card Header with Branding -->
+                <div class="card-header bg-dark text-white py-4 text-center">
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <img src="{% static 'images/farm.png' %}" alt="Logo" class="me-2" style="height: 40px;">
+                        <h3 class="mb-0">Esenza Scents</h3>
+                    </div>
+                    <h2 class="mb-0">Create Your Account</h2>
+                    <p class="mb-0 text-white-50">Join our fragrance community</p>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" class="needs-validation" novalidate>
                         {% csrf_token %}
-                        <div class="mb-3">
-                            <label class="form-label">{{ form.username.label }}</label>
-                            {{ form.username }}
-                            <div class="text-danger small">{{ form.username.errors }}</div>
+                        
+                        <!-- Form Fields -->
+                        <div class="row">
+                            <!-- Username Field -->
+                            <div class="col-12 mb-4">
+                                <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-person-circle me-2"></i>Username
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-person text-muted"></i>
+                                    </span>
+                                    {{ form.username }}
+                                </div>
+                                {% if form.username.errors %}
+                                <div class="text-danger small mt-2">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    {{ form.username.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Choose a unique username</div>
+                            </div>
+                            
+                            <!-- Email Field -->
+                            <div class="col-12 mb-4">
+                                <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-envelope me-2"></i>Email Address
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-envelope text-muted"></i>
+                                    </span>
+                                    {{ form.email }}
+                                </div>
+                                {% if form.email.errors %}
+                                <div class="text-danger small mt-2">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    {{ form.email.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">We'll never share your email</div>
+                            </div>
+                            
+                            <!-- Password Field -->
+                            <div class="col-12 mb-4">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-lock me-2"></i>Password
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-key text-muted"></i>
+                                    </span>
+                                    {{ form.password1 }}
+                                    <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePassword1">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                {% if form.password1.errors %}
+                                <div class="text-danger small mt-2">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    {{ form.password1.errors }}
+                                </div>
+                                {% endif %}
+                                <!-- Password Requirements -->
+                                <div class="mt-2">
+                                    <small class="text-muted">Password must contain:</small>
+                                    <ul class="list-unstyled ms-3 small text-muted">
+                                        <li><i class="bi bi-check-circle text-success me-1"></i> At least 8 characters</li>
+                                        <li><i class="bi bi-check-circle text-success me-1"></i> Letters and numbers</li>
+                                        <li><i class="bi bi-check-circle text-success me-1"></i> One special character</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Confirm Password Field -->
+                            <div class="col-12 mb-4">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-lock-fill me-2"></i>Confirm Password
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-key-fill text-muted"></i>
+                                    </span>
+                                    {{ form.password2 }}
+                                    <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePassword2">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                {% if form.password2.errors %}
+                                <div class="text-danger small mt-2">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    {{ form.password2.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Terms & Conditions -->
+                            <div class="col-12 mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                                    <label class="form-check-label small" for="termsCheck">
+                                        I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> and <a href="#" class="text-decoration-none">Privacy Policy</a>
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        You must agree before submitting.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <div class="col-12 mb-3">
+                                <button type="submit" class="btn btn-dark btn-lg w-100 py-3 fw-semibold">
+                                    <i class="bi bi-person-plus me-2"></i>Create Account
+                                </button>
+                            </div>
+                            
+                            <!-- Divider -->
+                            <div class="col-12 mb-4">
+                                <div class="d-flex align-items-center">
+                                    <hr class="flex-grow-1">
+                                    <span class="px-3 text-muted small">or continue with</span>
+                                    <hr class="flex-grow-1">
+                                </div>
+                            </div>
+                            
+                            <!-- Social Login Options -->
+                            <div class="col-12 mb-4">
+                                <div class="row g-2">
+                                    <div class="col">
+                                        <a href="#" class="btn btn-outline-dark w-100">
+                                            <i class="bi bi-google me-2"></i>Google
+                                        </a>
+                                    </div>
+                                    <div class="col">
+                                        <a href="#" class="btn btn-outline-dark w-100">
+                                            <i class="bi bi-facebook me-2"></i>Facebook
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Login Link -->
+                            <div class="col-12 text-center">
+                                <p class="mb-0">
+                                    Already have an account? 
+                                    <a href="{% url 'login' %}" class="text-decoration-none fw-semibold">
+                                        <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                                    </a>
+                                </p>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">{{ form.email.label }}</label>
-                            {{ form.email }}
-                            <div class="text-danger small">{{ form.email.errors }}</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">{{ form.password1.label }}</label>
-                            {{ form.password1 }}
-                            <div class="text-danger small">{{ form.password1.errors }}</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">{{ form.password2.label }}</label>
-                            {{ form.password2 }}
-                            <div class="text-danger small">{{ form.password2.errors }}</div>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Register</button>
                     </form>
-                    <div class="text-center mt-3">
-                        <p>Already have an account? <a href="{% url 'login' %}" class="text-decoration-none">Login</a></p>
+                </div>
+                
+                <!-- Card Footer -->
+                <div class="card-footer bg-light text-center py-3">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-check me-1"></i>
+                        Your data is securely encrypted and protected
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Benefits Section -->
+            <div class="row mt-4 text-center">
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 rounded-3 bg-dark text-white">
+                        <i class="bi bi-truck fs-4 mb-2"></i>
+                        <h6 class="mb-0">Free Shipping</h6>
+                        <small>On orders over $50</small>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 rounded-3 bg-dark text-white">
+                        <i class="bi bi-gift fs-4 mb-2"></i>
+                        <h6 class="mb-0">Member Rewards</h6>
+                        <small>Earn points with every purchase</small>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 rounded-3 bg-dark text-white">
+                        <i class="bi bi-shield-check fs-4 mb-2"></i>
+                        <h6 class="mb-0">Secure Checkout</h6>
+                        <small>100% secure payment</small>
                     </div>
                 </div>
             </div>
@@ -42,15 +215,193 @@
 
 <!-- Custom Styles -->
 <style>
-    input {
-        width: 100%;
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #ced4da;
+    body {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        min-height: 100vh;
     }
-    input:focus {
-        border-color: #007bff;
-        outline: none;
+    
+    .card {
+        border: none;
+        background: white;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #000000 0%, #1f2937 100%) !important;
+    }
+    
+    input.form-control {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 12px 15px;
+        border-radius: 0 8px 8px 0 !important;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    input.form-control:focus {
+        background-color: white;
+        border-color: #1f2937;
+        box-shadow: 0 0 0 0.25rem rgba(31, 41, 55, 0.15);
+    }
+    
+    .input-group-text {
+        background-color: #f8f9fa !important;
+        border: 1px solid #dee2e6;
+        border-right: none;
+        padding: 12px 15px;
+        border-radius: 8px 0 0 8px !important;
+    }
+    
+    .btn-dark {
+        background: linear-gradient(135deg, #000000 0%, #1f2937 100%);
+        border: none;
+        padding: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-dark:hover {
+        background: linear-gradient(135deg, #1f2937 0%, #000000 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-outline-dark {
+        border-color: #dee2e6;
+        color: #495057;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-dark:hover {
+        background-color: #1f2937;
+        border-color: #1f2937;
+        color: white;
+    }
+    
+    .form-label {
+        color: #1f2937;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+    
+    .form-text {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+    
+    /* Form validation styles */
+    .was-validated input:valid {
+        border-color: #198754;
+    }
+    
+    .was-validated input:invalid {
+        border-color: #dc3545;
+    }
+    
+    /* Password toggle button */
+    .btn-outline-secondary {
+        border-color: #dee2e6;
+        color: #6c757d;
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+        color: #495057;
+    }
+    
+    /* Benefits cards */
+    .rounded-3 {
+        border-radius: 12px !important;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 2rem !important;
+        }
+        
+        .btn-lg {
+            padding: 12px !important;
+        }
     }
 </style>
+
+<!-- JavaScript for Form Interactivity -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password visibility toggle
+        const togglePassword1 = document.getElementById('togglePassword1');
+        const togglePassword2 = document.getElementById('togglePassword2');
+        const password1 = document.getElementById('{{ form.password1.id_for_label }}');
+        const password2 = document.getElementById('{{ form.password2.id_for_label }}');
+        
+        if (togglePassword1 && password1) {
+            togglePassword1.addEventListener('click', function() {
+                const type = password1.getAttribute('type') === 'password' ? 'text' : 'password';
+                password1.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? 
+                    '<i class="bi bi-eye"></i>' : 
+                    '<i class="bi bi-eye-slash"></i>';
+            });
+        }
+        
+        if (togglePassword2 && password2) {
+            togglePassword2.addEventListener('click', function() {
+                const type = password2.getAttribute('type') === 'password' ? 'text' : 'password';
+                password2.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? 
+                    '<i class="bi bi-eye"></i>' : 
+                    '<i class="bi bi-eye-slash"></i>';
+            });
+        }
+        
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        }
+        
+        // Real-time password strength check
+        if (password1) {
+            password1.addEventListener('input', function() {
+                const password = this.value;
+                const requirements = document.querySelectorAll('.list-unstyled li i');
+                
+                // Check minimum length
+                if (password.length >= 8) {
+                    requirements[0].className = 'bi bi-check-circle-fill text-success me-1';
+                } else {
+                    requirements[0].className = 'bi bi-check-circle text-muted me-1';
+                }
+                
+                // Check for letters and numbers
+                if (/[a-zA-Z]/.test(password) && /\d/.test(password)) {
+                    requirements[1].className = 'bi bi-check-circle-fill text-success me-1';
+                } else {
+                    requirements[1].className = 'bi bi-check-circle text-muted me-1';
+                }
+                
+                // Check for special characters
+                if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+                    requirements[2].className = 'bi bi-check-circle-fill text-success me-1';
+                } else {
+                    requirements[2].className = 'bi bi-check-circle text-muted me-1';
+                }
+            });
+        }
+        
+        // Auto-focus on username field
+        const usernameField = document.getElementById('{{ form.username.id_for_label }}');
+        if (usernameField) {
+            usernameField.focus();
+        }
+    });
+</script>
 {% endblock %}

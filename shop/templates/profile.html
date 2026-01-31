@@ -80,9 +80,64 @@
 
             <!-- Main Content -->
             <div class="col-lg-8">
+
+                <!-- Recent Orders -->
+                <div class="profile-section card border-2 shadow-sm">
+                    <div class="card-header bg-primary-dark text-black border-0">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h4 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Orders</h4>
+                                <small class="opacity-75">Your latest purchase history</small>
+                            </div>
+                            <a href="{% url 'order_history' %}" class="btn btn-sm btn-light">
+                                View All <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        {% if active_orders %}
+                        <div class="orders-list">
+                            {% for order in active_orders|slice:":3" %}
+                            <div class="order-item d-flex align-items-center justify-content-between p-3 border-bottom">
+                                <div class="order-info">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <h6 class="mb-0 me-3">Order #{{ order.id }}</h6>
+                                        <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}warning{% endif %}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="bi bi-calendar me-1"></i>{{ order.created_at|date:"M d, Y" }}
+                                        • {{ order.items.count }} item{{ order.items.count|pluralize }}
+                                        • Total: Rs {{ order.total|floatformat:2 }}
+                                    </div>
+                                </div>
+                                <div class="order-actions">
+                                    <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-outline-primary-dark">
+                                        View Details <i class="bi bi-chevron-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state text-center py-5">
+                            <div class="empty-icon mb-3">
+                                <i class="bi bi-cart display-1 text-muted"></i>
+                            </div>
+                            <h5 class="text-muted mb-3">No orders yet</h5>
+                            <p class="text-muted mb-4">Start shopping to see your orders here</p>
+                            <a href="{% url 'shop' %}" class="btn btn-primary-dark">
+                                <i class="bi bi-bag me-2"></i>Start Shopping
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
                 <!-- Address Book -->
-                <div class="profile-section card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-primary-dark text-white border-0">
+                <div class="profile-section card border-2 shadow-sm mb-4 mt-4">
+                    <div class="card-header bg-primary-dark text-black border-0">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
                                 <h4 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Address Book</h4>
@@ -188,60 +243,7 @@
                     </div>
                 </div>
 
-                <!-- Recent Orders -->
-                <div class="profile-section card border-0 shadow-sm">
-                    <div class="card-header bg-primary-dark text-white border-0">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <h4 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Orders</h4>
-                                <small class="opacity-75">Your latest purchase history</small>
-                            </div>
-                            <a href="{% url 'order_history' %}" class="btn btn-sm btn-light">
-                                View All <i class="bi bi-arrow-right ms-1"></i>
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <div class="card-body p-4">
-                        {% if active_orders %}
-                        <div class="orders-list">
-                            {% for order in active_orders|slice:":3" %}
-                            <div class="order-item d-flex align-items-center justify-content-between p-3 border-bottom">
-                                <div class="order-info">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <h6 class="mb-0 me-3">Order #{{ order.id }}</h6>
-                                        <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}warning{% endif %}">
-                                            {{ order.get_status_display }}
-                                        </span>
-                                    </div>
-                                    <div class="text-muted small">
-                                        <i class="bi bi-calendar me-1"></i>{{ order.created_at|date:"M d, Y" }}
-                                        • {{ order.items.count }} item{{ order.items.count|pluralize }}
-                                        • Total: Rs {{ order.total|floatformat:2 }}
-                                    </div>
-                                </div>
-                                <div class="order-actions">
-                                    <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-outline-primary-dark">
-                                        View Details <i class="bi bi-chevron-right ms-1"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% else %}
-                        <div class="empty-state text-center py-5">
-                            <div class="empty-icon mb-3">
-                                <i class="bi bi-cart display-1 text-muted"></i>
-                            </div>
-                            <h5 class="text-muted mb-3">No orders yet</h5>
-                            <p class="text-muted mb-4">Start shopping to see your orders here</p>
-                            <a href="{% url 'shop' %}" class="btn btn-primary-dark">
-                                <i class="bi bi-bag me-2"></i>Start Shopping
-                            </a>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
+                
             </div>
         </div>
     </div>

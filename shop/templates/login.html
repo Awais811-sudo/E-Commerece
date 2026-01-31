@@ -1,31 +1,464 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - Esenza Scents{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-lg">
-                <div class="card-body text-center">
-                    <h3 class="card-title mb-4">Login</h3>
-
-                    <form method="post">
+        <div class="col-md-8 col-lg-6">
+            <!-- Login Card -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <!-- Card Header with Branding -->
+                <div class="card-header bg-dark text-white py-4 text-center position-relative">
+                    <!-- Background Pattern -->
+                    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10">
+                        <div class="pattern-dots pattern-dots-sm"></div>
+                    </div>
+                    
+                    <div class="position-relative z-1">
+                        <div class="d-flex justify-content-center align-items-center mb-3">
+                            <img src="{% static 'images/farm.png' %}" alt="Logo" class="me-2" style="height: 40px;">
+                            <h3 class="mb-0">Esenza Scents</h3>
+                        </div>
+                        <h2 class="mb-0">Welcome Back</h2>
+                        <p class="mb-0 text-white-50">Sign in to your account</p>
+                    </div>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" class="needs-validation" novalidate>
                         {% csrf_token %}
-                        {{ form.as_p }}
-                        <button type="submit" class="btn btn-primary btn-block">Login</button>
+                        
+                        <!-- Messages Display -->
+                        {% if messages %}
+                        <div class="messages mb-4">
+                            {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Form Fields -->
+                        <div class="row">
+                            <!-- Username/Email Field -->
+                            <div class="col-12 mb-4">
+                                <label for="id_username" class="form-label fw-semibold">
+                                    <i class="bi bi-person-circle me-2"></i>Username or Email
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-person text-muted"></i>
+                                    </span>
+                                    <input type="text" 
+                                           name="username" 
+                                           id="id_username" 
+                                           class="form-control"
+                                           placeholder="Enter your username or email"
+                                           required>
+                                </div>
+                                {% if form.username.errors %}
+                                <div class="text-danger small mt-2">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    {{ form.username.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Password Field -->
+                            <div class="col-12 mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label for="id_password" class="form-label fw-semibold">
+                                        <i class="bi bi-lock me-2"></i>Password
+                                    </label>
+                                    
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="bi bi-key text-muted"></i>
+                                    </span>
+                                    <input type="password" 
+                                           name="password" 
+                                           id="id_password" 
+                                           class="form-control"
+                                           placeholder="Enter your password"
+                                           required>
+                                    <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                {% if form.password.errors %}
+                                <div class="text-danger small mt-2">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    {{ form.password.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Remember Me -->
+                            <div class="col-12 mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="rememberMe">
+                                    <label class="form-check-label" for="rememberMe">
+                                        Remember me on this device
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <div class="col-12 mb-4">
+                                <button type="submit" class="btn btn-dark btn-lg w-100 py-3 fw-semibold">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                                </button>
+                            </div>
+                            
+                            <!-- Divider -->
+                            <div class="col-12 mb-4">
+                                <div class="d-flex align-items-center">
+                                    <hr class="flex-grow-1">
+                                    <span class="px-3 text-muted small">or continue with</span>
+                                    <hr class="flex-grow-1">
+                                </div>
+                            </div>
+                            
+                            <!-- Social Login -->
+                            <div class="col-12 mb-4">
+                                <div class="row g-2">
+                                    <div class="col">
+                                        <a href="#" class="btn btn-outline-dark w-100">
+                                            <i class="bi bi-google me-2"></i>Google
+                                        </a>
+                                    </div>
+                                    <div class="col">
+                                        <a href="#" class="btn btn-outline-dark w-100">
+                                            <i class="bi bi-facebook me-2"></i>Facebook
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </form>
-
-                   
-
-                   
-
-                    <hr>
-
-                    <p>Don't have an account? 
-                        <a href="{% url 'signup' %}" class="btn btn-link">Create Account</a>
+                </div>
+                
+                <!-- Card Footer -->
+                <div class="card-footer bg-light text-center py-3">
+                    <p class="mb-0">
+                        New to Esenza Scents? 
+                        <a href="{% url 'signup' %}" class="text-decoration-none fw-semibold">
+                            <i class="bi bi-person-plus me-1"></i>Create Account
+                        </a>
                     </p>
+                </div>
+            </div>
+            
+            <!-- Security Features -->
+            <div class="row mt-4 text-center">
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 rounded-3 bg-dark text-white">
+                        <i class="bi bi-shield-check fs-4 mb-2"></i>
+                        <h6 class="mb-0">Secure Login</h6>
+                        <small>Encrypted connection</small>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 rounded-3 bg-dark text-white">
+                        <i class="bi bi-clock-history fs-4 mb-2"></i>
+                        <h6 class="mb-0">Quick Access</h6>
+                        <small>Instant dashboard</small>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 rounded-3 bg-dark text-white">
+                        <i class="bi bi-credit-card fs-4 mb-2"></i>
+                        <h6 class="mb-0">Easy Checkout</h6>
+                        <small>Save payment methods</small>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Custom Styles -->
+<style>
+    body {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+    }
+    
+    /* Background Pattern */
+    .pattern-dots {
+        background-image: radial-gradient(currentColor 1px, transparent 1px);
+        background-size: calc(10 * 1px) calc(10 * 1px);
+        color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .pattern-dots-sm {
+        background-size: calc(8 * 1px) calc(8 * 1px);
+    }
+    
+    .card {
+        border: none;
+        background: white;
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #000000 0%, #1f2937 100%) !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    input.form-control {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 12px 15px;
+        border-radius: 0 8px 8px 0 !important;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    input.form-control:focus {
+        background-color: white;
+        border-color: #1f2937;
+        box-shadow: 0 0 0 0.25rem rgba(31, 41, 55, 0.15);
+    }
+    
+    .input-group-text {
+        background-color: #f8f9fa !important;
+        border: 1px solid #dee2e6;
+        border-right: none;
+        padding: 12px 15px;
+        border-radius: 8px 0 0 8px !important;
+    }
+    
+    .btn-dark {
+        background: linear-gradient(135deg, #000000 0%, #1f2937 100%);
+        border: none;
+        padding: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-dark:hover {
+        background: linear-gradient(135deg, #1f2937 0%, #000000 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-dark:active {
+        transform: translateY(0);
+    }
+    
+    .btn-outline-dark {
+        border-color: #dee2e6;
+        color: #495057;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-dark:hover {
+        background-color: #1f2937;
+        border-color: #1f2937;
+        color: white;
+    }
+    
+    .form-label {
+        color: #1f2937;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+    
+    /* Form validation */
+    .was-validated input:valid {
+        border-color: #198754;
+    }
+    
+    .was-validated input:invalid {
+        border-color: #dc3545;
+    }
+    
+    /* Password toggle */
+    .btn-outline-secondary {
+        border-color: #dee2e6;
+        color: #6c757d;
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+        color: #495057;
+    }
+    
+    /* Checkbox styling */
+    .form-check-input:checked {
+        background-color: #1f2937;
+        border-color: #1f2937;
+    }
+    
+    /* Alert styling */
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    .alert-success {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+    
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+    
+    /* Security features cards */
+    .rounded-3 {
+        border-radius: 12px !important;
+        transition: all 0.3s ease;
+    }
+    
+    .rounded-3:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 2rem !important;
+        }
+        
+        .btn-lg {
+            padding: 12px !important;
+        }
+        
+        .security-features .col-md-4 {
+            margin-bottom: 1rem;
+        }
+    }
+    
+    /* Floating animation for header */
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .card-header img {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    /* Decorative elements */
+    .decorative-line {
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #1f2937, transparent);
+        margin: 20px 0;
+    }
+</style>
+
+<!-- JavaScript for Enhanced Interactivity -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password visibility toggle
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('id_password');
+        
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? 
+                    '<i class="bi bi-eye"></i>' : 
+                    '<i class="bi bi-eye-slash"></i>';
+            });
+        }
+        
+        // Form validation
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    // Add shake animation to invalid fields
+                    const invalidFields = form.querySelectorAll(':invalid');
+                    invalidFields.forEach(field => {
+                        field.classList.add('animate__animated', 'animate__headShake');
+                        setTimeout(() => {
+                            field.classList.remove('animate__animated', 'animate__headShake');
+                        }, 1000);
+                    });
+                }
+                form.classList.add('was-validated');
+            }, false);
+        }
+        
+        // Auto-focus on username field
+        const usernameField = document.getElementById('id_username');
+        if (usernameField) {
+            usernameField.focus();
+            
+            // Add placeholder animation
+            usernameField.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            usernameField.addEventListener('blur', function() {
+                if (!this.value) {
+                    this.parentElement.classList.remove('focused');
+                }
+            });
+        }
+        
+        // Remember me functionality
+        const rememberMe = document.getElementById('rememberMe');
+        const savedUsername = localStorage.getItem('esenza_username');
+        
+        if (rememberMe && savedUsername && usernameField) {
+            usernameField.value = savedUsername;
+            rememberMe.checked = true;
+        }
+        
+        // Save username if remember me is checked
+        if (rememberMe && form) {
+            form.addEventListener('submit', function() {
+                if (rememberMe.checked && usernameField.value) {
+                    localStorage.setItem('esenza_username', usernameField.value);
+                } else {
+                    localStorage.removeItem('esenza_username');
+                }
+            });
+        }
+        
+        // Add loading state to submit button
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) {
+            form.addEventListener('submit', function() {
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+                submitButton.disabled = true;
+            });
+        }
+        
+        // Add decorative elements
+        const decorativeLine = document.createElement('div');
+        decorativeLine.className = 'decorative-line';
+        document.querySelector('.card-body').insertBefore(decorativeLine, document.querySelector('.card-body form'));
+    });
+</script>
+
+<!-- Animate.css for animations -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
 {% endblock %}
